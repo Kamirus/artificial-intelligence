@@ -3,7 +3,11 @@ import random
 
 import sys
 
-sys.setrecursionlimit(2000)
+sys.setrecursionlimit(5000)
+
+
+def open_relative(filename, *args, **kwargs):
+    return open(os.path.abspath(os.path.join(os.path.curdir, filename)), *args, **kwargs)
 
 
 def value(word_list):
@@ -30,21 +34,18 @@ def main(text, words):
             for i, _ in enumerate(text):
                 word = text[0:i + 1]
                 if word in words:
-                    try:
-                        yield [word] + dp(text[i + 1:])
-                    except ValueError:
-                        pass
+                    sub = dp(text[i + 1:])
+                    if sub is not None:
+                        yield [word] + sub
 
-        return max(step(), key=value)
+        return max(step(), key=value, default=None)
 
-    try:
-        return dp(text)
-    except ValueError as e:
-        raise Exception('not enough words') from e
-
+    res = dp(text)
+    assert res is not None, 'not enough words'
+    return res
 
 def load_words(filename='polish_words.txt'):
-    with open(os.path.abspath(os.path.join(os.path.curdir, filename))) as f:
+    with open_relative(filename) as f:
         return set(line.strip() for line in f)
 
 
@@ -52,7 +53,7 @@ def get_random_text(words, n):
     return ''.join(random.sample(words, n))
 
 
-def show_some_results():
+def show_some_results(words):
     l = [
         'tamatematykapustkinieznosi',
         'oprogramowywanąposznurowalibymentolinachoposowymiuszarganejnadstawianinienawykłauwarstwianonadsyłanychprzepiłowanego',
@@ -60,13 +61,20 @@ def show_some_results():
         'cięłystajałeubiłamkeynesiściewydobrzonymipsychagogiokiszówidealistówzaładowałbygnuśniałyśmyniewybitymikropnijcieczubiłbyśodpluskwiłbyśprzymnażającegofotogrametrachmailowałeśnieprzecieknięćniepryszczykowesupermolekułęodświętnenadcioszżeceremoniowałeśkeczupowąwypraszającegowzniecajżekoabitowałopochlebiłabyśszpuntującymszargałabyrozwiązywałaśsmażżesystematyzujeszfajdajofiarodawcówniezamiedzonegozatargiemułożyskowałbyprzeobraźnieprzykuwanymannozyduużagleniomśrubokrętówbroiłydomontowananiepapugowaniomcierniowegodosypialibyściegrodeturowejnielaszowaniem'
         'aminokwasemniepozdawaniemświrekwybijałybyściegermaniezapomniałaniezgodomtaratatkamorowałbypozaorywaniamizżarliciupażkamiwpędzanynienormalnychzdrabnianiawazeliniarscynieszarżującenietrymowaniakarteluszkompodgiąłeśsztuczkomtamaryndusaminiemarionetkowąmorganitommyślałaśnieżwirowcowatązamojskiegossijmypocwałowałbyśnierozbolałychniepółjazzowiwkładajkatalpomniesmoktaniprzebodłybyściegranadyjskiejniewytykaniachlogarytmującewyreżyserujemypozjadalibyokrzesaniamiłobuzowatymdłutujmymorionowiwmontowaniachdziekaniomniepechowąniedyniowatymkiczowatościomścierajmyżposmarkajciechorionuwyżlarzaociekłbynienasycańzawirujżeniepowinowatenamoczyłybyśmybezokiennąnieturlanywężowcatrójmiastachokostnowymnieobjadającągłuchołazianinfamiliantachzaprotestowanizwierzaniepolifonicznejzłudniejszegoskreczującychstachanowskimzapluskałynienapiętymiczęstującychzarównampogdakiwaniembłogosławiłopozastawiałaolepieńnabuntowywanezadowalaniuwygracujmykatapleksjoetalonachchytrzejącymigazozolównieopryskanychbookerapozaosobistychzaparkowałybyspłaszczyłbymwykańczałabyśniewyśpiewanemuostiariuszwyciśniętegoniegibanąandrusowskiejmyzyjskichwodorokwasom',
     ]
-    words = load_words()
-    print('Words loaded. Start processing...')
     l2 = [main(text, words) for text in l]
     print('Done. Printing...')
     for sentence in l2:
-        print(*sentence, sep=' ')
+        print(*sentence)
+
+
+def pan_tadeusz(words):
+    with open_relative('pan_tadeusz_bez_spacji.txt') as f:
+        for l in f:
+            print(*main(l.strip(), words))
 
 
 if __name__ == '__main__':
-    show_some_results()
+    words = load_words()
+    print('Words loaded. Start processing...')
+    # show_some_results(words)
+    pan_tadeusz(words)
