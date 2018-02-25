@@ -1,4 +1,5 @@
 import random
+import itertools
 
 colors = ('c', 'd', 'h', 's')  # clubs diamonds hearts spades
 symbols = ('ace', 'king', 'queen', 'jack')
@@ -29,15 +30,15 @@ def key_hand(hand):
     counter = [sum(1 for s in symbols if sym == s) for sym in set(symbols)]
 
     if is_straight(symbols) and is_all_colors:
-        key = 'poker'
+        key = 'poker'  # only numbers
     elif 4 in counter:
         key = '4'
     elif 3 in counter and 2 in counter:
         key = '3-2'
     elif is_all_colors:
-        key = 'color'
+        key = 'color'  # only numbers
     elif is_straight(symbols):
-        key = 'straight'
+        key = 'straight'  # only numbers
     elif 3 in counter:
         key = '3'
     elif sum(1 for x in counter if x == 2) == 2:
@@ -50,16 +51,35 @@ def key_hand(hand):
     return key
 
 
-def cmp(h1, h2):
-    return values_min_to_max.index(key_hand(h1)) - values_min_to_max.index(key_hand(h2))
+def hand_value(hand):
+    return 2 * values_min_to_max.index(key_hand(hand)) + (hand[0][1] in symbols)
+
+
+def test_decks(deck1, deck2, *, n_times=10000):
+    deck1_wins = 0
+    for _ in range(n_times):
+        h1, h2 = (random_hand(d) for d in (deck1, deck2))
+        if hand_value(h1) > hand_value(h2):
+            deck1_wins += 1
+    return 100.0 * deck1_wins / n_times
+
+
+def best_number_decks(*, min_win_rate=40, n_times=10):
+    def all_combinations(deck):
+        for i in range(32, len(deck)):  # without all
+            yield from itertools.combinations(deck, i)
+
+    def deck_scores():
+        for deck in all_combinations(cards_with_numbers):
+            win_rate = test_decks(deck, cards_with_symbols, n_times=n_times)
+            if win_rate >= min_win_rate:
+                yield win_rate, deck
+
+    return deck_scores()
 
 
 if __name__ == '__main__':
-    n = 10000
-    numbers_won = 0
-    for _ in range(n):
-        n_hand = random_hand(cards_with_numbers)
-        s_hand = random_hand(cards_with_symbols)
-        if cmp(n_hand, s_hand) > 0:
-            numbers_won += 1
-    print(100 * numbers_won / n, "%", sep='')
+    print('full decks')
+    print(f'Numbers win rate: ${test_decks(cards_with_numbers, cards_with_symbols)}%')
+    for win_rate, deck in best_number_decks(min_win_rate=70, n_times=100):
+        print(deck)
