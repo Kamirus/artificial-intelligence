@@ -1,19 +1,37 @@
 import os
+import random
+
+import sys
+
+sys.setrecursionlimit(2000)
+
 
 def value(word_list):
     return sum(len(word) ** 2 for word in word_list)
 
 
 def main(text, words):
+    def memo(f):
+        m = {}
+
+        def aux(x):
+            if x not in m:
+                m[x] = f(x)
+            return m[x]
+
+        return aux
+
+    @memo
     def dp(text):
         if not text:
             return []
+
         def step():
             for i, _ in enumerate(text):
-                word = text[0:i+1]
+                word = text[0:i + 1]
                 if word in words:
                     try:
-                        yield [word] + dp(text[i+1:])
+                        yield [word] + dp(text[i + 1:])
                     except ValueError:
                         pass
 
@@ -30,8 +48,25 @@ def load_words(filename='polish_words.txt'):
         return set(line.strip() for line in f)
 
 
-if __name__ == '__main__':
+def get_random_text(words, n):
+    return ''.join(random.sample(words, n))
+
+
+def show_some_results():
+    l = [
+        'tamatematykapustkinieznosi',
+        'oprogramowywanąposznurowalibymentolinachoposowymiuszarganejnadstawianinienawykłauwarstwianonadsyłanychprzepiłowanego',
+        'niezawieszańrozkiszeniomssakokształtnaprzekonsultujżehandlaromówcązaskorupianokonkatedralnąwykosztowywanieallosomowemubzikowatazagrzebmyniedwustronnemunieapozycyjnemueksplodującemuleżankoczyściusieńkiminiecelofanowymikomnatkapachciarscy',
+        'cięłystajałeubiłamkeynesiściewydobrzonymipsychagogiokiszówidealistówzaładowałbygnuśniałyśmyniewybitymikropnijcieczubiłbyśodpluskwiłbyśprzymnażającegofotogrametrachmailowałeśnieprzecieknięćniepryszczykowesupermolekułęodświętnenadcioszżeceremoniowałeśkeczupowąwypraszającegowzniecajżekoabitowałopochlebiłabyśszpuntującymszargałabyrozwiązywałaśsmażżesystematyzujeszfajdajofiarodawcówniezamiedzonegozatargiemułożyskowałbyprzeobraźnieprzykuwanymannozyduużagleniomśrubokrętówbroiłydomontowananiepapugowaniomcierniowegodosypialibyściegrodeturowejnielaszowaniem'
+        'aminokwasemniepozdawaniemświrekwybijałybyściegermaniezapomniałaniezgodomtaratatkamorowałbypozaorywaniamizżarliciupażkamiwpędzanynienormalnychzdrabnianiawazeliniarscynieszarżującenietrymowaniakarteluszkompodgiąłeśsztuczkomtamaryndusaminiemarionetkowąmorganitommyślałaśnieżwirowcowatązamojskiegossijmypocwałowałbyśnierozbolałychniepółjazzowiwkładajkatalpomniesmoktaniprzebodłybyściegranadyjskiejniewytykaniachlogarytmującewyreżyserujemypozjadalibyokrzesaniamiłobuzowatymdłutujmymorionowiwmontowaniachdziekaniomniepechowąniedyniowatymkiczowatościomścierajmyżposmarkajciechorionuwyżlarzaociekłbynienasycańzawirujżeniepowinowatenamoczyłybyśmybezokiennąnieturlanywężowcatrójmiastachokostnowymnieobjadającągłuchołazianinfamiliantachzaprotestowanizwierzaniepolifonicznejzłudniejszegoskreczującychstachanowskimzapluskałynienapiętymiczęstującychzarównampogdakiwaniembłogosławiłopozastawiałaolepieńnabuntowywanezadowalaniuwygracujmykatapleksjoetalonachchytrzejącymigazozolównieopryskanychbookerapozaosobistychzaparkowałybyspłaszczyłbymwykańczałabyśniewyśpiewanemuostiariuszwyciśniętegoniegibanąandrusowskiejmyzyjskichwodorokwasom',
+    ]
     words = load_words()
-    # text = 'tamatematykapustkinieznosi'
-    text = 'cześćczłowiektuinnyktośjaktamtenprzedmiot'
-    print(*main(text, words), sep=' ')
+    print('Words loaded. Start processing...')
+    l2 = [main(text, words) for text in l]
+    print('Done. Printing...')
+    for sentence in l2:
+        print(*sentence, sep=' ')
+
+
+if __name__ == '__main__':
+    show_some_results()
