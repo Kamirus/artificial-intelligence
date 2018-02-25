@@ -64,22 +64,16 @@ def test_decks(deck1, deck2, *, n_times=10000):
     return 100.0 * deck1_wins / n_times
 
 
-def best_number_decks(*, min_win_rate=40, n_times=10):
-    def all_combinations(deck):
-        for i in range(32, len(deck)):  # without all
-            yield from itertools.combinations(deck, i)
-
-    def deck_scores():
-        for deck in all_combinations(cards_with_numbers):
-            win_rate = test_decks(deck, cards_with_symbols, n_times=n_times)
-            if win_rate >= min_win_rate:
-                yield win_rate, deck
-
-    return deck_scores()
+def number_deck_variations_and_results():
+    for i in range(2, 10):
+        for c in range(4):
+            if (11 - i) * (4 - c) < 5:
+                continue
+            number_deck = [(color, val) for color in colors[c:] for val in range(i, 11)]
+            win_rate = test_decks(number_deck, cards_with_symbols)
+            yield win_rate, f'{4-c}c {i}-10 {len(number_deck)}'
 
 
 if __name__ == '__main__':
-    print('full decks')
     print(f'Numbers win rate: ${test_decks(cards_with_numbers, cards_with_symbols)}%')
-    for win_rate, deck in best_number_decks(min_win_rate=70, n_times=100):
-        print(deck)
+    print(*sorted(number_deck_variations_and_results(), reverse=True), sep='\n')
