@@ -10,17 +10,11 @@ def all_possible_spacings(text, words):
     @memo
     def dp(text):
         if not text:
-            return [['']]
+            return [[]]
 
-        def step():
-            for i, _ in enumerate(text):
-                word = text[0:i + 1]
-                if word in words:
-                    possible_endings = dp(text[i + 1:])
-                    for ending in possible_endings:
-                        yield [word] + ending
-
-        return list(step())  # don't cache iterator!
+        return [[word] + ending
+                for word in (p for p in prefixes(text) if p in words)
+                for ending in dp(text[len(word):])]
 
     return [' '.join(l) for l in dp(text)]
 
@@ -54,8 +48,8 @@ def main():
     filename = 'pan-tadeusz.txt'
     words = load_words()
     print('Words loaded. Start processing...')
-
     res = compare(filename, words, max_square_spacing)
+
     N = 9937
     print(res[0], res[0] / N)  # 8148
 
@@ -84,6 +78,10 @@ def old_max_square_spacing(text, words):
     res = dp(text)
     assert res is not None, f'not enough words in: {text}'
     return ' '.join(res)
+
+
+def prefixes(s):
+    return (s[:i] for i in range(1, len(s) + 1))
 
 
 def memo(f):
