@@ -4,48 +4,88 @@ from z4 import opt_dist
 
 
 def init_matrix(l1, l2):
-    return tuple(tuple(random.randint(0, 1) for _ in len(l1)) for _ in len(l2))
+    return [[random.randint(0, 1) for _ in range(len(l1))] for _ in range(len(l2))]
 
 
 def get_column(i, matrix):
     return [matrix[j][i] for j in range(len(matrix))]
 
 
-def iter_columns(matrix):
-    for row in matrix[:1]:
-        return (get_column(i, matrix) for i in range(len(row)))
+def get_columns(matrix):
+    return [get_column(i, matrix) for i in range(len(matrix[0]))]
+
+
+def neg_kth(seq, index):
+    s = seq[:]
+    s[index] = int(not s[index])
+    return s
 
 
 class LogPics:
     def __init__(self, row_c, col_c):
-        self.row_c = row_c
-        self.col_c = col_c
+        # rows + columns
         self.matrix = init_matrix(row_c, col_c)
+        self.n = len(self.matrix)
+        self.matrix.extend(get_columns(self.matrix))
+        self.reqs = row_c + col_c
 
-    def get_wrong_rows(self):
-        return [(i, row) for i, row in enumerate(self.matrix)
-                if opt_dist(row, self.row_c[i])]
+    def get_wrongs(self):
+        return [i for i, s in enumerate(self.matrix) if opt_dist(s, self.reqs[i])]
 
-    def get_wrong_cols(self):
-        return [(i, col) for i, col in enumerate(iter_columns(self.matrix))
-                if opt_dist(col, self.col_c[i])]
+    def iter_cost_j(self, i):
+        n = self.n
+        j0 = n if i < n else 0  # if row then 1st col else 1st row
+        for off in range(n):
+            j = j0 + off
+            neg_seq_i = neg_kth(self.matrix[i], off)
+            neg_seq_j = neg_kth(self.matrix[j], i % n)
+            sum = opt_dist(neg_seq_i, self.reqs[i]) \
+                + opt_dist(neg_seq_j, self.reqs[j])
+            yield sum, j
 
-    def solve(self):
-        while True:
-            rows = self.get_wrong_rows()
-            cols = self.get_wrong_cols()
-            if rows:
-                ...
-            else 
+    def neg(self, i, j):
+        n = self.n
+        self.matrix[i][j % n] = int(not self.matrix[i][j % n])
+        self.matrix[j][i % n] = int(not self.matrix[j][i % n])
 
+    def solve(self, max_tries=100000, print_all=False):
+        for _ in range(max_tries):
+            try:
+                i = random.choice(self.get_wrongs())
+            except IndexError:
+                return  # done
+            else:
+                _, j = min(self.iter_cost_j(i))
+                print_all and self.print_matrix()
+                self.neg(i, j)
+        self.solve(max_tries=max_tries, print_all=print_all)
+
+    def print_matrix(self):
+        print(*(''.join('#' if x else '.' for x in s)
+                for s in self.matrix[:self.n]), sep='\n', end='\n\n')
+
+    def solve_and_print(self):
+        self.solve()
+        self.print_matrix()
 
 
 if __name__ == '__main__':
+    for r, c in [
+        ([7, 7, 7, 7, 7, 7, 7], [7, 7, 7, 7, 7, 7, 7]),
+        ([2, 2, 7, 7, 2, 2, 2], [2, 2, 7, 7, 2, 2, 2]),
+        ([2, 2, 7, 7, 2, 2, 2], [4, 4, 2, 2, 2, 5, 5]),
+        ([7, 6, 5, 4, 3, 2, 1], [1, 2, 3, 4, 5, 6, 7]),
+        ([7, 5, 3, 1, 1, 1, 1], [1, 2, 3, 7, 3, 2, 1])
+    ]:
+        LogPics(r, c).solve_and_print()
 
-    # r_c = [1, 1]
-    # c_c = [1, 1]
+    # matrix = init_matrix(row_c, col_c)
+    # print(matrix)
+    # matrix.extend(get_columns(matrix))
+    # print(matrix)
+
     # matrix = [[1, 0], [0, 1]]
     # print(is_done(matrix, r_c, c_c))
 
     # matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    # print(*iter_columns(matrix))
+    # print(*get_columns(matrix))
