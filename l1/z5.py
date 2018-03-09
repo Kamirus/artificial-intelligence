@@ -70,7 +70,7 @@ class LogPics:
                     self.neg(i, j)
                 print_all and self.print_matrix()
         self.reinitialize()
-        return self.solve(max_tries=10 * max_tries, print_all=print_all)
+        return self.solve(max_tries=self.n ** 2 + max_tries, print_all=print_all)
 
     def print_matrix(self):
         print(*(''.join('#' if x else '.' for x in s)
