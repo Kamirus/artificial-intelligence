@@ -53,23 +53,24 @@ class LogPics:
         self.matrix[i][j % n] = int(not self.matrix[i][j % n])
         self.matrix[j][i % n] = int(not self.matrix[j][i % n])
 
-    def solve(self, max_tries=1000, print_all=False):
+    def solve(self, max_tries=100, print_all=False):
         for _ in range(max_tries):
             try:
-                i = random.choice(self.get_wrongs())
+                wrongs = self.get_wrongs()
+                i = random.choice(wrongs)
             except IndexError:
                 return self  # done
             else:
-                _, j = min(self.iter_cost_j(i))
-                if random.random() < 0.01:
-                    # break it
-                    worse = [jj for cost, jj in self.iter_cost_j(i) if jj != j]
-                    self.neg(i, random.choice(worse))
+                if len(wrongs) < self.n and random.random() < 0.0001:
+                    # break ok ones
+                    ok_rows = [x for x in range(self.n) if x not in wrongs]
+                    self.neg(random.choice(ok_rows), random.choice(range(self.n)))
                 else:
+                    _, j = min(self.iter_cost_j(i))
                     self.neg(i, j)
                 print_all and self.print_matrix()
         self.reinitialize()
-        return self.solve(max_tries=100 * max_tries, print_all=print_all)
+        return self.solve(max_tries=10 * max_tries, print_all=print_all)
 
     def print_matrix(self):
         print(*(''.join('#' if x else '.' for x in s)
@@ -78,11 +79,11 @@ class LogPics:
 
 if __name__ == '__main__':
     for r, c in [
-        ([7, 7, 7, 7, 7, 7, 7], [7, 7, 7, 7, 7, 7, 7]),
-        ([2, 2, 7, 7, 2, 2, 2], [2, 2, 7, 7, 2, 2, 2]),
+        # ([7, 7, 7, 7, 7, 7, 7], [7, 7, 7, 7, 7, 7, 7]),
+        # ([2, 2, 7, 7, 2, 2, 2], [2, 2, 7, 7, 2, 2, 2]),
         ([2, 2, 7, 7, 2, 2, 2], [4, 4, 2, 2, 2, 5, 5]),
-        ([7, 6, 5, 4, 3, 2, 1], [1, 2, 3, 4, 5, 6, 7]),
-        ([7, 5, 3, 1, 1, 1, 1], [1, 2, 3, 7, 3, 2, 1])
+        # ([7, 6, 5, 4, 3, 2, 1], [1, 2, 3, 4, 5, 6, 7]),
+        # ([7, 5, 3, 1, 1, 1, 1], [1, 2, 3, 7, 3, 2, 1])
     ]:
         LogPics(r, c).solve(print_all=True).print_matrix()
 
