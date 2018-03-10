@@ -53,11 +53,21 @@ def _king_all_moves(x, y):
 
 def _tower_all_moves(state):
     x, y = state[1]
-    OGRANICZ JEGO RUCHY
-    def aux(x, y):
-        yield from ((x + i, y) for i in range(-x + 1, 9 - x))
-        yield from ((x, y + j) for j in range(-y + 1, 9 - y))
+
+    def one_dir(mx, my):
+        for pos in ((x + mx * k, y + my * k)
+                    for k in range(1, 8)):
+            if pos in state or not valid_pos(pos):
+                break
+            yield pos
+
+    def aux(*_):
+        yield from one_dir(-1, 0)  # left moves
+        yield from one_dir(1, 0)  # right moves
+        yield from one_dir(0, 1)  # up moves
+        yield from one_dir(0, -1)  # down moves
     return aux
+
 
 def white_possible_moves(state):
     black_attacked = set(black_attacked_positions(state))
@@ -66,6 +76,10 @@ def white_possible_moves(state):
 
 
 def black_possible_moves(state):
+    black_attacked = set(black_attacked_positions(state))
+    if state[0] in black_attacked or state[1] in black_attacked:
+        raise RuntimeError('black attacks sth')
+
     white_attacked = set(white_attacked_positions(state))
     return (s for s in black_king_moves(state) if s[2] not in white_attacked)
 
@@ -117,22 +131,49 @@ def path(state, predecessor):
     yield state
 
 
-def min_mat(state):
-    predecessor = {}
-    q = deque([(state, True)])
-    predecessor[state] = None
-    while q:
-        state, is_white_turn = q.pop()
-        moves = list(all_moves_from(state, is_white_turn=is_white_turn))
-        if not moves:
-            # assert is_mat(state), 'mat'
-            return state, predecessor
-        for next_state in moves:
-            if next_state not in predecessor:
-                predecessor[next_state] = state
-                q.appendleft((next_state, not is_white_turn))
-    raise ValueError('ended without mat')
+def min_mat(state, is_white_turn=True, debug=False):
+    def aux(state, is_white_turn):
+        predecessor = {}
+        q = deque([(state, is_white_turn)])
+        predecessor[state] = None
+        while q:
+            state, is_white_turn = q.pop()
+            try:
+                moves = list(all_moves_from(
+                    state, is_white_turn=is_white_turn))
+            except RuntimeError:  # black attacks, drop state
+                continue
+            if not moves:
+                return state, predecessor
+            for next_state in moves:
+                if next_state not in predecessor:
+                    predecessor[next_state] = state
+                    q.appendleft((next_state, not is_white_turn))
+        raise ValueError('ended without mat')
 
+    win, pred = aux(state, is_white_turn)
+    min_path = list(path(win, pred))
+    if debug:
+        for s in min_path:
+            draw(s)
+    return len(min_path) - 1
+
+
+def parse_line(line):
+    turn, *str_positions = line.split()
+    return turn == 'white', tuple(load_position(pos) for pos in str_positions)
+
+
+def main(debug=False):
+    with open('test_z1.in') as f:
+        for line in f:
+            line = line.strip()
+            is_white_turn, state = parse_line(line)
+            print(min_mat(state, is_white_turn, debug))
+
+
+if __name__ == '__main__':
+    main(debug=True)
 
 # s = ((1, 1), (2, 2), (3, 3))
 # s = ((3, 2), (1, 8), (1, 1))
@@ -140,8 +181,12 @@ def min_mat(state):
 # print(is_mat(s))
 # for state in all_moves_from(s):
 #     draw(state)
-s = ((3, 3), (5, 7), (2, 1))
-win, pred = min_mat(s)
-for state in path(win, pred):
-    draw(state)
+
+# s = ((3, 3), (5, 7), (2, 1))
+# s = ((3, 4), (3, 8), (8, 3))  # black
+# s = ((1, 1), (2, 2), (3, 3))
+
+# win, pred = min_mat(s, is_white_turn=True)
+# for state in path(win, pred):
+#     draw(state)
 # draw(min_mat(s)[0])
