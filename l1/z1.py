@@ -174,19 +174,3 @@ def main(debug=False):
 
 if __name__ == '__main__':
     main(debug=True)
-
-# s = ((1, 1), (2, 2), (3, 3))
-# s = ((3, 2), (1, 8), (1, 1))
-# draw(s)
-# print(is_mat(s))
-# for state in all_moves_from(s):
-#     draw(state)
-
-# s = ((3, 3), (5, 7), (2, 1))
-# s = ((3, 4), (3, 8), (8, 3))  # black
-# s = ((1, 1), (2, 2), (3, 3))
-
-# win, pred = min_mat(s, is_white_turn=True)
-# for state in path(win, pred):
-#     draw(state)
-# draw(min_mat(s)[0])
