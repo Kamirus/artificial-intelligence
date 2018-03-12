@@ -21,11 +21,12 @@ def neg_kth(seq, index):
     return s
 
 
-class LogPics:
-    def __init__(self, row_c, col_c):
+class LogPicsSimple:
+    def __init__(self, row_c, col_c, cost_func=opt_dist):
         # rows + columns
         self.row_c = row_c
         self.col_c = col_c
+        self.cost_func = cost_func
         self._reinitialize()
 
     def solve(self, max_tries=100, print_all=False):
@@ -55,7 +56,7 @@ class LogPics:
                 for row in self.matrix[:self.n]), sep='\n', end='\n\n')
 
     def _get_wrongs(self):
-        return [i for i, s in enumerate(self.matrix) if opt_dist(s, self.reqs[i])]
+        return [i for i, s in enumerate(self.matrix) if self.cost_func(s, self.reqs[i])]
 
     def _iter_cost_j(self, i):
         if i < self.n:  # i = row index
@@ -67,8 +68,8 @@ class LogPics:
             j = j0 + off
             neg_seq_i = neg_kth(self.matrix[i], off)
             neg_seq_j = neg_kth(self.matrix[j], i % n)
-            sum = opt_dist(neg_seq_i, self.reqs[i]) \
-                + opt_dist(neg_seq_j, self.reqs[j])
+            sum = self.cost_func(neg_seq_i, self.reqs[i]) \
+                + self.cost_func(neg_seq_j, self.reqs[j])
             yield sum, j
 
     def _neg(self, i, j):
@@ -99,4 +100,4 @@ if __name__ == '__main__':
         # ([3, 2, 3, 4, 2], [1, 2, 3, 1, 1, 2, 2, 1, 1]),
         # ([3, 3, 3, 4, 2], [2, 2, 3, 1, 1, 2, 2, 1, 1]),
     ]:
-        LogPics(r, c).solve(print_all=0).print_matrix()
+        LogPicsSimple(r, c).solve(print_all=0).print_matrix()
