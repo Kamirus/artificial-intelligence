@@ -4,21 +4,20 @@ from nonograms import Nonogram
 def parse_line_ints(line): return (int(s) for s in line.strip().split())
 
 
-def load_input(*, spy=False):
-    _input = input
+def load_input(spy=1):
+    n, m = parse_line_ints(input())
+    row_c = tuple(tuple(parse_line_ints(input())) for _ in range(n))
+    col_c = tuple(tuple(parse_line_ints(input())) for _ in range(m))
+
     if spy:
-        import sys
+        with open('zad_input.txt', 'w') as f:
+            print(n,m, file=f)
+            for ll in [row_c, col_c]:
+                for l in ll:
+                    print(*l, file=f)
 
-        def _input():
-            l = input()
-            print(l, file=sys.stderr)
-            return l
-
-    n, m = parse_line_ints(_input())
-    row_c = tuple(tuple(parse_line_ints(_input())) for _ in range(n))
-    col_c = tuple(tuple(parse_line_ints(_input())) for _ in range(m))
     return row_c, col_c
 
 
 if __name__ == '__main__':
-    Nonogram(*load_input(spy=1)).solve(print_all=0).print_matrix()
+    Nonogram(*load_input(spy=0)).solve(print_all=0).print_matrix()
