@@ -1,7 +1,8 @@
 import random
 
 from functools import lru_cache
-from util import get_columns, init_random_matrix, neg_kth
+from util import get_columns, init_random_matrix, neg_kth, memo
+from typing import Callable, Tuple
 
 
 class SimpleNonogram:
@@ -39,7 +40,7 @@ class SimpleNonogram:
                 for row in self.matrix[:self.n]), sep='\n', end='\n\n')
 
     def _get_wrongs(self):
-        return [i for i, s in enumerate(self.matrix) if self.cost_func(s, self.reqs[i])]
+        return [i for i, s in enumerate(self.matrix) if self.cost_func(tuple(s), self.reqs[i])]
 
     def _iter_cost_j(self, i):
         if i < self.n:  # i = row index
@@ -49,8 +50,8 @@ class SimpleNonogram:
 
         for off in range(n):
             j = j0 + off
-            neg_seq_i = neg_kth(self.matrix[i], off)
-            neg_seq_j = neg_kth(self.matrix[j], i % n)
+            neg_seq_i = tuple(neg_kth(self.matrix[i], off))
+            neg_seq_j = tuple(neg_kth(self.matrix[j], i % n))
             sum = self.cost_func(neg_seq_i, self.reqs[i]) \
                 + self.cost_func(neg_seq_j, self.reqs[j])
             yield sum, j
@@ -60,8 +61,8 @@ class SimpleNonogram:
             i, j = j, i
         assert 0 <= i < self.n and self.n <= j < len(
             self.matrix), "one should be row index, 2nd col index"
-        self.matrix[i] = neg_kth(self.matrix[i], j - self.n)
-        self.matrix[j] = neg_kth(self.matrix[j], i)
+        self.matrix[i] = list(neg_kth(self.matrix[i], j - self.n))
+        self.matrix[j] = list(neg_kth(self.matrix[j], i))
 
     def _reinitialize(self):
         self.matrix = init_random_matrix(self.row_c, self.col_c)
@@ -77,23 +78,16 @@ def opt_dist(s, k):  # ones_zeros_str, ones_len
     return sum(map(int, s)) - best_sum + k - best_sum
 
 
-def opt_dist_2d(seq, ks):
-    """
-    calculate cost of changing [seq] ({0,1}*)
-    into 0* 1^k1 0* ... 1^kn 0*, where ks={k1..kn}
-    """
-    # all chars - required 1s - minimum 0 separators
-    additional_0s = len(seq) - sum(ks) - (len(ks) - 1)
-
-    @lru_cache(2048)
-    def dp(start, i_ki, sep0s):
+def _produce_opt_dist_2d():
+    @memo
+    def dp(seq, ks, start, i_ki, sep0s):
         assert i_ki < len(ks)
         assert sep0s >= 0
 
         if start >= len(seq):
             return None
 
-        def aux():
+        def _dp():
             ki = ks[i_ki]
             for off in range(sep0s + 1):
                 if i_ki == len(ks) - 1:  # last one, take all
@@ -101,13 +95,26 @@ def opt_dist_2d(seq, ks):
                 else:
                     end = start + ki + off
                     s = seq[start:end]
-                    rec = dp(end + 1, i_ki + 1, sep0s - off)
+                    rec = dp(seq, ks, end + 1, i_ki + 1, sep0s - off)
                     if rec is not None:
                         sep_cost = int(seq[end])
                         yield opt_dist(s, ki) + sep_cost + rec
-        return min(aux())
+        return min(_dp())
 
-    return dp(0, 0, additional_0s)
+
+    def opt_dist_2d(seq, ks):
+        """
+        calculate cost of changing [seq] ({0,1}*)
+        into 0* 1^k1 0* ... 1^kn 0*, where ks={k1..kn}
+        """
+        # all chars - required 1s - minimum 0 separators
+        additional_0s = len(seq) - sum(ks) - (len(ks) - 1)
+        return dp(seq, ks, 0, 0, additional_0s)
+
+    return opt_dist_2d
+
+
+opt_dist_2d = _produce_opt_dist_2d()
 
 
 class Nonogram(SimpleNonogram):

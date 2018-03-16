@@ -1,6 +1,11 @@
 import random
+import functools
+
+from typing import Tuple, Iterable
 
 # 2D matrix
+
+
 def init_random_matrix(rows, cols):
     return [[random.randint(0, 1) for _ in range(len(cols))] for _ in range(len(rows))]
 
@@ -14,19 +19,19 @@ def get_columns(matrix):
 
 
 # sequence
-def neg_kth(seq, index):
-    s = seq[:]
-    s[index] = int(not s[index])
-    return s
+def neg_kth(seq: Iterable[int], index: int) -> Iterable[int]:
+    return (int(not x) if index == i else x
+            for i, x in enumerate(seq))
 
 
 # funcs
-def memo_one_arg(f):
+def memo(f):
     m = {}
 
-    def aux(x):
-        if x not in m:
-            m[x] = f(x)
-        return m[x]
+    @functools.wraps(f)
+    def aux(*args):
+        if args not in m:
+            m[args] = f(*args)
+        return m[args]
 
     return aux
