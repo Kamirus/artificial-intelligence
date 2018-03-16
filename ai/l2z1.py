@@ -21,4 +21,4 @@ def load_input(*, spy=False):
 
 
 if __name__ == '__main__':
-    Nonogram(*load_input()).solve(print_all=0).print_matrix()
+    Nonogram(*load_input(spy=1)).solve(print_all=0).print_matrix()

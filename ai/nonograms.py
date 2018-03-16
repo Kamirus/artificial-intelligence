@@ -33,7 +33,9 @@ class SimpleNonogram:
                     _, j = min(self._iter_cost_j(i))
                 self._neg(i, j)
         self._reinitialize()
-        return self.solve(max_tries=len(self.matrix) ** 2 + max_tries, print_all=print_all)
+        # next_max_tries = len(self.matrix) ** 2 + max_tries
+        next_max_tries = max_tries + 100
+        return self.solve(max_tries=next_max_tries, print_all=print_all)
 
     def print_matrix(self):
         print(*(''.join('#' if x else '.' for x in row)
