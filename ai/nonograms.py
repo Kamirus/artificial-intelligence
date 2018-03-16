@@ -1,32 +1,15 @@
 import random
 
-from z4 import opt_dist
+from functools import lru_cache
+from util import get_columns, init_random_matrix, neg_kth
 
 
-def init_matrix(rows, cols):
-    return [[random.randint(0, 1) for _ in range(len(cols))] for _ in range(len(rows))]
-
-
-def get_column(i, matrix):
-    return [matrix[j][i] for j in range(len(matrix))]
-
-
-def get_columns(matrix):
-    return [get_column(i, matrix) for i in range(len(matrix[0]))]
-
-
-def neg_kth(seq, index):
-    s = seq[:]
-    s[index] = int(not s[index])
-    return s
-
-
-class LogPicsSimple:
-    def __init__(self, row_c, col_c, cost_func):
+class SimpleNonogram:
+    def __init__(self, row_c, col_c):
         # rows + columns
         self.row_c = row_c
         self.col_c = col_c
-        self.cost_func = cost_func
+        self.cost_func = opt_dist
         self._reinitialize()
 
     def solve(self, max_tries=100, print_all=False):
@@ -81,23 +64,64 @@ class LogPicsSimple:
         self.matrix[j] = neg_kth(self.matrix[j], i)
 
     def _reinitialize(self):
-        self.matrix = init_matrix(self.row_c, self.col_c)
+        self.matrix = init_random_matrix(self.row_c, self.col_c)
         self.n = len(self.matrix)  # number of rows
         self.matrix.extend(get_columns(self.matrix))
         self.m = len(self.matrix) - self.n  # number of columns
         self.reqs = self.row_c + self.col_c
 
 
-if __name__ == '__main__':
-    for r, c in [
-        # ([7, 7, 7, 7, 7, 7, 7], [7, 7, 7, 7, 7, 7, 7]),
-        # ([2, 2, 7, 7, 2, 2, 2], [2, 2, 7, 7, 2, 2, 2]),
-        ([2, 2, 7, 7, 2, 2, 2], [4, 4, 2, 2, 2, 5, 5]),
-        # ([7, 6, 5, 4, 3, 2, 1], [1, 2, 3, 4, 5, 6, 7]),
-        # ([7, 5, 3, 1, 1, 1, 1], [1, 2, 3, 7, 3, 2, 1]),
-        # ([1, 1, 1, 1], [2, 2]),
-        # ([2, 3], [1, 1, 1, 1, 1]),
-        # ([3, 2, 3, 4, 2], [1, 2, 3, 1, 1, 2, 2, 1, 1]),
-        # ([3, 3, 3, 4, 2], [2, 2, 3, 1, 1, 2, 2, 1, 1]),
-    ]:
-        LogPicsSimple(r, c, cost_func=opt_dist).solve(print_all=1).print_matrix()
+def opt_dist(s, k):  # ones_zeros_str, ones_len
+    best_sum = max(sum(int(x) for x in s[i:i + k])
+                   for i in range(len(s) - k + 1))  # all substr beginnings
+    return sum(map(int, s)) - best_sum + k - best_sum
+
+
+def opt_dist_2d(seq, ks):
+    """
+    calculate cost of changing [seq] ({0,1}*)
+    into 0* 1^k1 0* ... 1^kn 0*, where ks={k1..kn}
+    """
+    # all chars - required 1s - minimum 0 separators
+    additional_0s = len(seq) - sum(ks) - (len(ks) - 1)
+
+    @lru_cache(2048)
+    def dp(start, i_ki, sep0s):
+        assert i_ki < len(ks)
+        assert sep0s >= 0
+
+        if start >= len(seq):
+            return None
+
+        def aux():
+            ki = ks[i_ki]
+            for off in range(sep0s + 1):
+                if i_ki == len(ks) - 1:  # last one, take all
+                    yield opt_dist(seq[start:], ki)
+                else:
+                    end = start + ki + off
+                    s = seq[start:end]
+                    rec = dp(end + 1, i_ki + 1, sep0s - off)
+                    if rec is not None:
+                        sep_cost = int(seq[end])
+                        yield opt_dist(s, ki) + sep_cost + rec
+        return min(aux())
+
+    return dp(0, 0, additional_0s)
+
+
+class Nonogram(SimpleNonogram):
+    def __init__(self, row_c, col_c):
+        super().__init__(row_c, col_c)
+        self.cost_func = opt_dist_2d
+
+
+# if __name__ == '__main__':
+#     assert opt_dist_2d('0000', [1, 2]) == 3
+#     assert opt_dist_2d('0100', [1, 2]) == 4
+#     assert opt_dist_2d('00000000', [1, 2, 3]) == 6
+#     assert opt_dist_2d('10110111', [1, 2, 3]) == 0
+#     assert opt_dist_2d('000000000', [1, 2, 3]) == 6
+#     x = opt_dist_2d('011100000', [1, 2, 3])
+#     print(x)
+#     print('ok')
