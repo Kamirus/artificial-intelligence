@@ -13,7 +13,10 @@ class SimpleNonogram:
         self.cost_func = opt_dist
         self._reinitialize()
 
-    def solve(self, max_tries=100, print_all=False):
+    def solve(self, max_tries=None, print_all=False):
+        kkk = (self.n * self.m) ** 2
+        max_tries = max_tries or kkk
+
         for _ in range(max_tries):
             print_all and self.print_matrix()
             try:
@@ -22,19 +25,21 @@ class SimpleNonogram:
             except IndexError:
                 return self  # done
             else:
-                if random.random() < 0.01 and len(wrongs) < len(self.matrix):
+                if random.random() < 0.20 and len(wrongs) < len(self.matrix):
                     # break ok ones
                     oks = [k for k, _ in enumerate(self.matrix)
                            if k not in wrongs]
                     i = random.choice(oks)
-                    # _, j = random.choice(list(self._iter_cost_j(i)))
-                    _, j = max(self._iter_cost_j(i))
+                    _, j = random.choice(list(self._iter_cost_j(i)))
+                    # _, j = max(self._iter_cost_j(i))
                 else:
                     _, j = min(self._iter_cost_j(i))
                 self._neg(i, j)
         self._reinitialize()
         # next_max_tries = len(self.matrix) ** 2 + max_tries
-        next_max_tries = max_tries + 100
+        next_max_tries = max_tries + kkk
+        print_all and print('\n', '-' * 10, 'reinitialize', '-' * 10)
+        # next_max_tries = max_tries
         return self.solve(max_tries=next_max_tries, print_all=print_all)
 
     def print_matrix(self):
