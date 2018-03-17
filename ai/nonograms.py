@@ -14,8 +14,8 @@ class SimpleNonogram:
         self._reinitialize()
 
     def solve(self, max_tries=None, print_all=False):
-        kkk = (self.n * self.m) ** 2
-        max_tries = max_tries or kkk
+        first_max_tries = (self.n * self.m) ** 2
+        max_tries = max_tries or first_max_tries
 
         for _ in range(max_tries):
             print_all and self.print_matrix()
@@ -25,21 +25,23 @@ class SimpleNonogram:
             except IndexError:
                 return self  # done
             else:
-                if random.random() < 0.20 and len(wrongs) < len(self.matrix):
+                if random.random() < 0.21 and len(wrongs) < len(self.matrix):
                     # break ok ones
                     oks = [k for k, _ in enumerate(self.matrix)
                            if k not in wrongs]
                     i = random.choice(oks)
-                    _, j = random.choice(list(self._iter_cost_j(i)))
+                    j = random.randrange(len(self.matrix[i])) \
+                        + (self.n if i < self.n else 0)
+                    # _, j = random.choice(list(self._iter_cost_j(i)))
                     # _, j = max(self._iter_cost_j(i))
                 else:
                     _, j = min(self._iter_cost_j(i))
                 self._neg(i, j)
         self._reinitialize()
         # next_max_tries = len(self.matrix) ** 2 + max_tries
-        next_max_tries = max_tries + kkk
+        # next_max_tries = max_tries + first_max_tries
         print_all and print('\n', '-' * 10, 'reinitialize', '-' * 10)
-        # next_max_tries = max_tries
+        next_max_tries = max_tries
         return self.solve(max_tries=next_max_tries, print_all=print_all)
 
     def print_matrix(self):
@@ -80,48 +82,52 @@ class SimpleNonogram:
 
 
 def opt_dist(s, k):  # ones_zeros_str, ones_len
-    best_sum = max(sum(int(x) for x in s[i:i + k])
-                   for i in range(len(s) - k + 1))  # all substr beginnings
-    return sum(map(int, s)) - best_sum + k - best_sum
+    # 10110
+    # k=3
+    #   233
+    prefix_sums = [0]  # prefix_sums[i], sum of first i elements
+    for i, x in enumerate(s):
+        prefix_sums.append(x + prefix_sums[i])
+
+    best_k_elem_sum = max(prefix_sums[i + k] - prefix_sums[i]
+                          for i in range(len(prefix_sums) - k))
+    return prefix_sums[-1] + k - best_k_elem_sum * 2
+    # best_sum = max(sum(int(x) for x in s[i:i + k])
+    #                for i in range(len(s) - k + 1))  # all substr beginnings
+    # return sum(map(int, s)) - best_sum + k - best_sum
 
 
-def _produce_opt_dist_2d():
-    @memo
-    def dp(seq, ks, start, i_ki, sep0s):
-        assert i_ki < len(ks)
-        assert sep0s >= 0
+@memo
+def _dp_opt_dist_2d(seq, ks, start, i_ki, sep0s):
+    assert i_ki < len(ks)
+    assert sep0s >= 0
 
-        if start >= len(seq):
-            return None
+    if start >= len(seq):
+        return None
 
-        def _dp():
-            ki = ks[i_ki]
-            for off in range(sep0s + 1):
-                if i_ki == len(ks) - 1:  # last one, take all
-                    yield opt_dist(seq[start:], ki)
-                else:
-                    end = start + ki + off
+    def _dp():
+        ki = ks[i_ki]
+        for off in range(sep0s + 1):
+            if i_ki == len(ks) - 1:  # last one, take all
+                yield opt_dist(seq[start:], ki)
+            else:
+                end = start + ki + off
+                rec = _dp_opt_dist_2d(seq, ks, end + 1, i_ki + 1, sep0s - off)
+                if rec is not None:
                     s = seq[start:end]
-                    rec = dp(seq, ks, end + 1, i_ki + 1, sep0s - off)
-                    if rec is not None:
-                        sep_cost = int(seq[end])
-                        yield opt_dist(s, ki) + sep_cost + rec
-        return min(_dp())
+                    sep_cost = int(seq[end])
+                    yield opt_dist(s, ki) + sep_cost + rec
+    return min(_dp())
 
 
-    def opt_dist_2d(seq, ks):
-        """
-        calculate cost of changing [seq] ({0,1}*)
-        into 0* 1^k1 0* ... 1^kn 0*, where ks={k1..kn}
-        """
-        # all chars - required 1s - minimum 0 separators
-        additional_0s = len(seq) - sum(ks) - (len(ks) - 1)
-        return dp(seq, ks, 0, 0, additional_0s)
-
-    return opt_dist_2d
-
-
-opt_dist_2d = _produce_opt_dist_2d()
+def opt_dist_2d(seq, ks):
+    """
+    calculate cost of changing [seq] ({0,1}*)
+    into 0* 1^k1 0* ... 1^kn 0*, where ks={k1..kn}
+    """
+    # all chars - required 1s - minimum 0 separators
+    additional_0s = len(seq) - sum(ks) - (len(ks) - 1)
+    return _dp_opt_dist_2d(seq, ks, 0, 0, additional_0s)
 
 
 class Nonogram(SimpleNonogram):

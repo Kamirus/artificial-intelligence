@@ -11,5 +11,4 @@ for j in $(seq 1 3); do
     done
 
     wait
-    # for i in 0 1 2; do wait ${pid[$i]}; done
 done

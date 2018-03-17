@@ -6,6 +6,10 @@ zad=zad1
 input=l2z1.py
 
 
-for i in $(seq 1 $MAX); do
-    python $validator --stdio --cases $i $zad python3.6 ai/$input | grep -E "Running case" &
+# for i in $(seq 1 $MAX); do
+#     python $validator --stdio --cases $i $zad python3.6 ai/$input | grep -E "Running case" &
+# done;
+
+for i in $(seq 1 3); do
+    python $validator --stdio $zad python3.6 ai/$input &
 done;
