@@ -28,8 +28,9 @@ class SimpleNonogram:
             else:
                 if random.random() < 0.21 and len(wrongs) < len(self.matrix):
                     # break ok ones
+                    wrongs_set = set(wrongs)
                     oks = [k for k, _ in enumerate(self.matrix)
-                           if k not in wrongs]
+                           if k not in wrongs_set]
                     i = random.choice(oks)
                     j = random.randrange(len(self.matrix[i])) \
                         + (self.n if i < self.n else 0)
@@ -60,19 +61,20 @@ class SimpleNonogram:
 
         for off in range(n):
             j = j0 + off
-            neg_seq_i = tuple(neg_kth(self.matrix[i], off))
-            neg_seq_j = tuple(neg_kth(self.matrix[j], i % n))
-            sum = self.cost_func(neg_seq_i, self.reqs[i]) \
-                + self.cost_func(neg_seq_j, self.reqs[j])
-            yield sum, j
+            self._neg(i, j)
+            cost_i = self.cost_func(self.matrix[i], self.reqs[i])
+            cost_j = self.cost_func(self.matrix[j], self.reqs[j])
+            self._neg(i, j)
+
+            yield cost_i + cost_j, j
 
     def _neg(self, i, j):
         if not (0 <= i < self.n):  # i != row index
             i, j = j, i
         assert 0 <= i < self.n and self.n <= j < len(self.matrix), \
             "one should be row index, 2nd col index"
-        self.matrix[i] = list(neg_kth(self.matrix[i], j - self.n))
-        self.matrix[j] = list(neg_kth(self.matrix[j], i))
+        self.matrix[i][j - self.n] = int(not self.matrix[i][j - self.n])
+        self.matrix[j][i] = int(not self.matrix[j][i])
 
     def _reinitialize(self):
         self.matrix = init_random_matrix(self.row_c, self.col_c)
@@ -123,7 +125,7 @@ def opt_dist_2d(seq, ks):
     """
     # all chars - required 1s - minimum 0 separators
     additional_0s = len(seq) - sum(ks) - (len(ks) - 1)
-    return _dp_opt_dist_2d(seq, ks, 0, 0, additional_0s)
+    return _dp_opt_dist_2d(tuple(seq), ks, 0, 0, additional_0s)
 
 
 class Nonogram(SimpleNonogram):
