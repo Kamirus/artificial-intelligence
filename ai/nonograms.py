@@ -11,13 +11,14 @@ class SimpleNonogram:
         # rows + columns
         self.row_c = row_c
         self.col_c = col_c
+        self.n = len(row_c)
+        self.m = len(col_c)
+        self.first_max_tries = int((self.n * self.m) ** 3)
         self.cost_func = opt_dist
         self._reinitialize()
 
     def solve(self, max_tries=None, print_all=False):
-        first_max_tries = (self.n * self.m) ** 2
-        max_tries = max_tries or first_max_tries
-
+        max_tries = max_tries or self.first_max_tries
         for _ in range(max_tries):
             print_all and self.print_matrix()
             try:
@@ -41,7 +42,7 @@ class SimpleNonogram:
                 self._neg(i, j)
         self._reinitialize()
         # next_max_tries = len(self.matrix) ** 2 + max_tries
-        # next_max_tries = max_tries + first_max_tries
+        # next_max_tries = max_tries + self.first_max_tries
         print_all and print('\n', '-' * 10, 'reinitialize', '-' * 10)
         next_max_tries = max_tries
         return self.solve(max_tries=next_max_tries, print_all=print_all)
@@ -78,9 +79,7 @@ class SimpleNonogram:
 
     def _reinitialize(self):
         self.matrix = init_random_matrix(self.row_c, self.col_c)
-        self.n = len(self.matrix)  # number of rows
         self.matrix.extend(get_columns(self.matrix))
-        self.m = len(self.matrix) - self.n  # number of columns
         self.reqs = self.row_c + self.col_c
 
 
