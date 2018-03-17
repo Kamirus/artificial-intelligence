@@ -21,17 +21,17 @@ def load_input(spy=1):
 
 if __name__ == '__main__':
     Nonogram(*load_input(spy=0)).solve(print_all=0).print_matrix()
+    # import cProfile
+    # cProfile.run('Nonogram(*load_input(spy=0)).solve(print_all=0).print_matrix()')
 
 
-# import cProfile
-# cProfile.run('Nonogram(*load_input(spy=0)).solve(print_all=0).print_matrix()')
 """
-         232066064 function calls (218883729 primitive calls) in 90.451 seconds
+         52544115 function calls (48497243 primitive calls) in 16.775 seconds
 
    Ordered by: standard name
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        1    0.000    0.000  105.706  105.706 <string>:1(<module>)
+        1    0.000    0.000   16.775   16.775 <string>:1(<module>)
         1    0.000    0.000    0.000    0.000 codecs.py:318(decode)
         1    0.000    0.000    0.000    0.000 codecs.py:330(getstate)
        16    0.000    0.000    0.000    0.000 l2z1.py:10(<genexpr>)
@@ -39,49 +39,50 @@ if __name__ == '__main__':
        31    0.000    0.000    0.000    0.000 l2z1.py:4(parse_line_ints)
         1    0.000    0.000    0.000    0.000 l2z1.py:7(load_input)
        16    0.000    0.000    0.000    0.000 l2z1.py:9(<genexpr>)
-  7905090    5.196    0.000   85.280    0.000 nonograms.py:112(opt_dist_2d)
-        1    0.000    0.000    0.000    0.000 nonograms.py:123(__init__)
-      3/1    0.357    0.119  105.705  105.705 nonograms.py:16(solve)
-    30766    0.145    0.000    0.145    0.000 nonograms.py:30(<listcomp>)
-        1    0.000    0.000    0.000    0.000 nonograms.py:46(print_matrix)
-       16    0.000    0.000    0.000    0.000 nonograms.py:47(<genexpr>)
-   147135    0.103    0.000    9.593    0.000 nonograms.py:50(_get_wrongs)
-   147135    1.826    0.000    9.490    0.000 nonograms.py:51(<listcomp>)
-  1861888    7.756    0.000   93.380    0.000 nonograms.py:53(_iter_cost_j)
-   147134    0.732    0.000    1.439    0.000 nonograms.py:67(_neg)
-        3    0.000    0.000    0.001    0.000 nonograms.py:75(_reinitialize)
-  6643381    7.627    0.000   60.118    0.000 nonograms.py:83(opt_dist)
- 40405554   14.139    0.000   41.992    0.000 nonograms.py:84(<genexpr>)
-1368094/91263    1.097    0.000   72.584    0.001 nonograms.py:89(_dp_opt_dist_2d)
-        1    0.000    0.000    0.000    0.000 nonograms.py:9(__init__)
-8011475/839972    6.796    0.000   72.343    0.000 nonograms.py:97(_dp)
-    31441    0.023    0.000    0.048    0.000 random.py:172(randrange)
-      675    0.000    0.000    0.001    0.000 random.py:216(randint)
-   209342    0.165    0.000    0.237    0.000 random.py:222(_randbelow)
-   177901    0.108    0.000    0.335    0.000 random.py:252(choice)
-       45    0.000    0.000    0.001    0.000 util.py:10(<listcomp>)
-       45    0.000    0.000    0.000    0.000 util.py:13(get_column)
-       45    0.000    0.000    0.000    0.000 util.py:14(<listcomp>)
-        3    0.000    0.000    0.000    0.000 util.py:17(get_columns)
-        3    0.000    0.000    0.000    0.000 util.py:18(<listcomp>)
-  3785308    1.581    0.000    1.581    0.000 util.py:22(neg_kth)
- 60564928    7.121    0.000    7.121    0.000 util.py:23(<genexpr>)
-11272125/7905090    7.663    0.000   77.806    0.000 util.py:31(aux)
-        3    0.000    0.000    0.001    0.000 util.py:9(init_random_matrix)
+        1    0.000    0.000    0.001    0.001 nonograms.py:10(__init__)
+2490223/269608    2.458    0.000   12.843    0.000 nonograms.py:103(_dp)
+   912690    0.601    0.000   14.390    0.000 nonograms.py:119(opt_dist_2d)
+        1    0.000    0.000    0.001    0.001 nonograms.py:130(__init__)
+        1    0.045    0.045   16.774   16.774 nonograms.py:17(solve)
+     3600    0.017    0.000    0.017    0.000 nonograms.py:31(<listcomp>)
+        1    0.000    0.000    0.000    0.000 nonograms.py:48(print_matrix)
+       16    0.000    0.000    0.000    0.000 nonograms.py:49(<genexpr>)
+    17012    0.013    0.000    1.254    0.000 nonograms.py:52(_get_wrongs)
+    17012    0.222    0.000    1.242    0.000 nonograms.py:53(<listcomp>)
+   214576    0.901    0.000   15.197    0.000 nonograms.py:55(_iter_cost_j)
+    17011    0.084    0.000    0.166    0.000 nonograms.py:69(_neg)
+        1    0.000    0.000    0.001    0.001 nonograms.py:77(_reinitialize)
+  2072041    4.437    0.000    8.766    0.000 nonograms.py:85(opt_dist)
+ 12954662    1.702    0.000    1.702    0.000 nonograms.py:90(<genexpr>)
+418182/28589    0.326    0.000   12.915    0.000 nonograms.py:95(_dp_opt_dist_2d)
+     3825    0.003    0.000    0.006    0.000 random.py:172(randrange)
+      225    0.000    0.000    0.001    0.000 random.py:216(randint)
+    24437    0.020    0.000    0.029    0.000 random.py:222(_randbelow)
+    20612    0.013    0.000    0.041    0.000 random.py:252(choice)
+       15    0.000    0.000    0.001    0.000 util.py:10(<listcomp>)
+       15    0.000    0.000    0.000    0.000 util.py:13(get_column)
+       15    0.000    0.000    0.000    0.000 util.py:14(<listcomp>)
+        1    0.000    0.000    0.000    0.000 util.py:17(get_columns)
+        1    0.000    0.000    0.000    0.000 util.py:18(<listcomp>)
+   436352    0.188    0.000    0.188    0.000 util.py:22(neg_kth)
+  6981632    0.819    0.000    0.819    0.000 util.py:23(<genexpr>)
+1931631/912690    1.286    0.000   13.514    0.000 util.py:31(aux)
+        1    0.000    0.000    0.001    0.001 util.py:9(init_random_matrix)
         1    0.000    0.000    0.000    0.000 {built-in method _codecs.utf_8_decode}
-        1    0.000    0.000  105.706  105.706 {built-in method builtins.exec}
+        1    0.000    0.000   16.775   16.775 {built-in method builtins.exec}
        31    0.000    0.000    0.000    0.000 {built-in method builtins.input}
- 32250669    2.159    0.000    2.159    0.000 {built-in method builtins.len}
-  6643381    5.606    0.000   47.598    0.000 {built-in method builtins.max}
-1484462/117498    1.837    0.000   94.760    0.001 {built-in method builtins.min}
+  7907399    0.566    0.000    0.566    0.000 {built-in method builtins.len}
+  2072041    1.611    0.000    3.312    0.000 {built-in method builtins.max}
+431593/13870    0.448    0.000   15.487    0.001 {built-in method builtins.min}
         1    0.000    0.000    0.000    0.000 {built-in method builtins.print}
- 48310644   18.322    0.000   33.576    0.000 {built-in method builtins.sum}
-   209342    0.018    0.000    0.018    0.000 {method 'bit_length' of 'int' objects}
+   912690    0.161    0.000    0.161    0.000 {built-in method builtins.sum}
+ 12625749    0.845    0.000    0.845    0.000 {method 'append' of 'list' objects}
+    24437    0.002    0.000    0.002    0.000 {method 'bit_length' of 'int' objects}
         1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
-        3    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
-   310595    0.055    0.000    0.055    0.000 {method 'getrandbits' of '_random.Random' objects}
+        1    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
+    37109    0.007    0.000    0.007    0.000 {method 'getrandbits' of '_random.Random' objects}
        15    0.000    0.000    0.000    0.000 {method 'join' of 'str' objects}
-   147134    0.017    0.000    0.017    0.000 {method 'random' of '_random.Random' objects}
+    17011    0.002    0.000    0.002    0.000 {method 'random' of '_random.Random' objects}
        31    0.000    0.000    0.000    0.000 {method 'split' of 'str' objects}
        31    0.000    0.000    0.000    0.000 {method 'strip' of 'str' objects}
 """

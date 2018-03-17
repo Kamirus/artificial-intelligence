@@ -1,8 +1,9 @@
 import random
+import itertools
 
 from functools import lru_cache
 from util import get_columns, init_random_matrix, neg_kth, memo
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Iterable
 
 
 class SimpleNonogram:
@@ -68,8 +69,8 @@ class SimpleNonogram:
     def _neg(self, i, j):
         if not (0 <= i < self.n):  # i != row index
             i, j = j, i
-        assert 0 <= i < self.n and self.n <= j < len(
-            self.matrix), "one should be row index, 2nd col index"
+        assert 0 <= i < self.n and self.n <= j < len(self.matrix), \
+            "one should be row index, 2nd col index"
         self.matrix[i] = list(neg_kth(self.matrix[i], j - self.n))
         self.matrix[j] = list(neg_kth(self.matrix[j], i))
 
@@ -81,10 +82,7 @@ class SimpleNonogram:
         self.reqs = self.row_c + self.col_c
 
 
-def opt_dist(s, k):  # ones_zeros_str, ones_len
-    # 10110
-    # k=3
-    #   233
+def opt_dist(s: Iterable[int], k: int) -> int:  # ones_zeros_str, ones_len
     prefix_sums = [0]  # prefix_sums[i], sum of first i elements
     for i, x in enumerate(s):
         prefix_sums.append(x + prefix_sums[i])
@@ -92,13 +90,10 @@ def opt_dist(s, k):  # ones_zeros_str, ones_len
     best_k_elem_sum = max(prefix_sums[i + k] - prefix_sums[i]
                           for i in range(len(prefix_sums) - k))
     return prefix_sums[-1] + k - best_k_elem_sum * 2
-    # best_sum = max(sum(int(x) for x in s[i:i + k])
-    #                for i in range(len(s) - k + 1))  # all substr beginnings
-    # return sum(map(int, s)) - best_sum + k - best_sum
 
 
 @memo
-def _dp_opt_dist_2d(seq, ks, start, i_ki, sep0s):
+def _dp_opt_dist_2d(seq: Tuple[int], ks: Tuple[int], start: int, i_ki: int, sep0s: int) -> int:
     assert i_ki < len(ks)
     assert sep0s >= 0
 
@@ -109,12 +104,13 @@ def _dp_opt_dist_2d(seq, ks, start, i_ki, sep0s):
         ki = ks[i_ki]
         for off in range(sep0s + 1):
             if i_ki == len(ks) - 1:  # last one, take all
-                yield opt_dist(seq[start:], ki)
+                s = itertools.islice(seq, start, len(seq))  # seq[start:]
+                yield opt_dist(s, ki)
             else:
                 end = start + ki + off
                 rec = _dp_opt_dist_2d(seq, ks, end + 1, i_ki + 1, sep0s - off)
                 if rec is not None:
-                    s = seq[start:end]
+                    s = itertools.islice(seq, start, end)  # seq[start:end]
                     sep_cost = int(seq[end])
                     yield opt_dist(s, ki) + sep_cost + rec
     return min(_dp())
