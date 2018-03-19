@@ -1,7 +1,8 @@
-import random
 import functools
+import queue
+import random
 
-from typing import Tuple, Iterable
+from typing import Iterable, Tuple
 
 # 2D matrix
 
@@ -35,3 +36,23 @@ def memo(f):
         return m[args]
 
     return aux
+
+
+# data structures
+class PQueue():
+    """
+    Hides priority of queue.PriorityQueue as optional parameter
+    Elements of equal priority in FIFO order
+    """
+
+    def __init__(self) -> None:
+        self.cnt = 0
+        self.q = queue.PriorityQueue()
+
+    def push(self, item, priority=0):
+        self.q.put((priority, self.cnt, item))
+        self.cnt += 1
+
+    def pop(self):
+        _, _, item = self.q.get()
+        return item

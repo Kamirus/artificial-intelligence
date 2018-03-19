@@ -1,3 +1,5 @@
+import util
+
 from typing import Tuple, FrozenSet, Iterable, Optional, List, Set
 
 Pos = Tuple[int, int]
@@ -31,6 +33,9 @@ def load_state() -> Tuple[Map, Boxes, Boxes, Pos]:
     return board, frozenset(boxes), frozenset(targets), guy
 
 
+
+
+
 class Sokoban:
     def __init__(self) -> None:
         board, boxes, targets, guy = load_state()
@@ -57,23 +62,42 @@ class Sokoban:
                 yield move, pos, boxes - {pos} | {(x + i, y + j)}
 
     def is_end(self, boxes: Boxes) -> bool:
-        pass
+        return self.targets == boxes
+
+    def search(self) -> str:
+        """finds shortest sequence of moves to finish state"""
+        q = util.PQueue()
+        memo = {}
+        q.push(self.fst)
+        memo[self.fst] = ''
+        while q:
+            _, boxes = state = q.pop()
+            if self.is_end(boxes):
+                return memo[state]
+            for move, nguy, nboxes in self.next_states(*state):
+                next_state = (nguy, nboxes)
+                if next_state not in memo:
+                    memo[next_state] = memo[state] + move
+                    q.push(next_state)
+        raise RuntimeError('Found nothing!')
 
 
 def main() -> None:
-    f = open('zad_output.txt', 'w')
-    board, boxes, targets, guy = load_state()
-    print(*board, sep='\n', file=f)
-    print(boxes, sep='\n', file=f)
-    print(guy, sep='\n', file=f)
+    with open('zad_output.txt', 'w') as f:
+        board, boxes, targets, guy = load_state()
+        # print(*board, sep='\n', file=f)
+        # print(boxes, sep='\n', file=f)
+        # print(targets, sep='\n', file=f)
+        # print(guy, sep='\n', file=f)
 
-    sokoban = Sokoban()
+        moves = Sokoban().search()
+        print(moves, file=f)
 
-    # sokoban.next_states([1, 2], {1})
-    # sokoban.next_states((1, 2), {(1,2)})
+        # sokoban.next_states([1, 2], {1})
+        # sokoban.next_states((1, 2), {(1,2)})
 
-    for move, g, b in Sokoban().next_states(*sokoban.fst):
-        print(move, g, b, file=f)
+        # for move, g, b in Sokoban().next_states(*sokoban.fst):
+        #     print(move, g, b, file=f)
 
 
 if __name__ == '__main__':
