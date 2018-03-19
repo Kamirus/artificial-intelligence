@@ -2,7 +2,9 @@ import functools
 import queue
 import random
 
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Generic, TypeVar
+
+T = TypeVar('T')
 
 # 2D matrix
 
@@ -39,7 +41,7 @@ def memo(f):
 
 
 # data structures
-class PQueue():
+class PQueue(Generic[T]):
     """
     Hides priority of queue.PriorityQueue as optional parameter
     Elements of equal priority in FIFO order
@@ -49,10 +51,10 @@ class PQueue():
         self.cnt = 0
         self.q = queue.PriorityQueue()
 
-    def push(self, item, priority=0):
+    def push(self, item: T, priority: int=0) -> None:
         self.q.put((priority, self.cnt, item))
         self.cnt += 1
 
-    def pop(self):
+    def pop(self) -> T:
         _, _, item = self.q.get()
         return item

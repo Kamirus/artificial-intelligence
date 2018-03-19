@@ -3,7 +3,7 @@ import itertools
 
 from functools import lru_cache
 from util import get_columns, init_random_matrix, neg_kth, memo
-from typing import Callable, Tuple, Iterable
+from typing import Callable, Tuple, Iterable, Optional
 
 
 class SimpleNonogram:
@@ -94,7 +94,7 @@ def opt_dist(s: Iterable[int], k: int) -> int:  # ones_zeros_str, ones_len
 
 
 @memo
-def _dp_opt_dist_2d(seq: Tuple[int], ks: Tuple[int], start: int, i_ki: int, sep0s: int) -> int:
+def _dp_opt_dist_2d(seq: Tuple[int], ks: Tuple[int], start: int, i_ki: int, sep0s: int) -> Optional[int]:
     assert i_ki < len(ks)
     assert sep0s >= 0
 

@@ -1,10 +1,10 @@
-import util
-
-from typing import Tuple, FrozenSet, Iterable, Optional, List, Set
+from util import PQueue
+from typing import Tuple, FrozenSet, Iterable, Optional, List, Set, Callable
 
 Pos = Tuple[int, int]
 Boxes = FrozenSet[Pos]
 Map = List[str]
+State = Tuple[Pos, Boxes]
 
 
 def load_state() -> Tuple[Map, Boxes, Boxes, Pos]:
@@ -31,9 +31,6 @@ def load_state() -> Tuple[Map, Boxes, Boxes, Pos]:
     assert guy is not None, "player not found on map"
 
     return board, frozenset(boxes), frozenset(targets), guy
-
-
-
 
 
 class Sokoban:
@@ -64,11 +61,18 @@ class Sokoban:
     def is_end(self, boxes: Boxes) -> bool:
         return self.targets == boxes
 
-    def search(self) -> str:
+    def search_bfs(self) -> str:
+        return self._search(lambda _: 0)
+
+    def search_astar(self) -> str:
+
+        return self._search()
+
+    def _search(self, p: Callable[[State], int]) -> str:
         """finds shortest sequence of moves to finish state"""
-        q = util.PQueue()
+        q: PQueue[State] = PQueue()
         memo = {}
-        q.push(self.fst)
+        q.push(self.fst, p(self.fst))
         memo[self.fst] = ''
         while q:
             _, boxes = state = q.pop()
@@ -78,26 +82,13 @@ class Sokoban:
                 next_state = (nguy, nboxes)
                 if next_state not in memo:
                     memo[next_state] = memo[state] + move
-                    q.push(next_state)
+                    q.push(next_state, p(next_state))
         raise RuntimeError('Found nothing!')
 
 
 def main() -> None:
     with open('zad_output.txt', 'w') as f:
-        board, boxes, targets, guy = load_state()
-        # print(*board, sep='\n', file=f)
-        # print(boxes, sep='\n', file=f)
-        # print(targets, sep='\n', file=f)
-        # print(guy, sep='\n', file=f)
-
-        moves = Sokoban().search()
-        print(moves, file=f)
-
-        # sokoban.next_states([1, 2], {1})
-        # sokoban.next_states((1, 2), {(1,2)})
-
-        # for move, g, b in Sokoban().next_states(*sokoban.fst):
-        #     print(move, g, b, file=f)
+        print(Sokoban().search_bfs(), file=f)
 
 
 if __name__ == '__main__':
