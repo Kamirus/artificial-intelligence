@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.mypy_cache/
 __pycache__/
 zad_input.txt
 zad_output.txt

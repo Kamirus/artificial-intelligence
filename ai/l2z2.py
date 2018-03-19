@@ -1,11 +1,18 @@
-def load_state():
+from typing import Tuple, FrozenSet, Iterable, Optional, List, Set
+
+Pos = Tuple[int, int]
+Boxes = FrozenSet[Pos]
+Map = List[str]
+
+
+def load_state() -> Tuple[Map, Boxes, Pos]:
     replace = 'KB*+'
     ___with = '..GG'
     trans = str.maketrans(replace, ___with, '\n')
 
-    board = []  # just walls and blanks
-    boxes = set()  # {(a, b)}
-    guy = None  # (a, b)
+    board: Map = []  # just walls and blanks
+    boxes: Set[Pos] = set()  # {(a, b)}
+    guy: Optional[Pos] = None  # (a, b)
 
     with open('zad_input.txt') as f:
         for i, line in enumerate(f):
@@ -15,11 +22,13 @@ def load_state():
             if j_guy != -1:
                 guy = (i, j_guy)
 
+    assert guy is not None, "player not found on map"
+
     return board, frozenset(boxes), guy
 
 
 class Sokoban:
-    def __init__(self):
+    def __init__(self) -> None:
         board, boxes, guy = load_state()
         self.map = board
         self.fst = (guy, boxes)
@@ -28,10 +37,10 @@ class Sokoban:
                       'L': (0, -1),
                       'R': (0, 1), }
 
-    def _is_place_free(self, i, j, boxes):
+    def _is_place_free(self, i: int, j: int, boxes: Boxes) -> bool:
         return self.map[i][j] in {'.', 'G'} and (i, j) not in boxes
 
-    def next_states(self, guy, boxes):
+    def next_states(self, guy: Pos, boxes: Boxes) -> Iterable[Tuple[str, Pos, Boxes]]:
         guy_i, guy_j = guy
         for move in self.moves:
             i, j = self.moves[move]
@@ -42,8 +51,10 @@ class Sokoban:
             elif is_box and self._is_place_free(x + i, y + j, boxes):
                 yield move, pos, boxes - {pos} | {(x + i, y + j)}
 
+    def is_end(self, boxes: Boxes) -> bool:
+        pass
 
-def main():
+def main() -> None:
     f = open('zad_output.txt', 'w')
     board, boxes, guy = load_state()
     print(*board, sep='\n', file=f)
@@ -51,6 +62,9 @@ def main():
     print(guy, sep='\n', file=f)
 
     sokoban = Sokoban()
+
+    # sokoban.next_states([1, 2], {1})
+    # sokoban.next_states((1, 2), {(1,2)})
 
     for move, g, b in Sokoban().next_states(*sokoban.fst):
         print(move, g, b, file=f)
