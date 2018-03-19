@@ -5,32 +5,37 @@ Boxes = FrozenSet[Pos]
 Map = List[str]
 
 
-def load_state() -> Tuple[Map, Boxes, Pos]:
-    replace = 'KB*+'
-    ___with = '..GG'
+def load_state() -> Tuple[Map, Boxes, Boxes, Pos]:
+    replace = '.WKB*+G'
+    ___with = '.W..GGG'
     trans = str.maketrans(replace, ___with, '\n')
 
     board: Map = []  # just walls and blanks
-    boxes: Set[Pos] = set()  # {(a, b)}
-    guy: Optional[Pos] = None  # (a, b)
+    boxes: Set[Pos] = set()
+    targets: Set[Pos] = set()  # where boxes should be placed
+    guy: Optional[Pos] = None
 
     with open('zad_input.txt') as f:
         for i, line in enumerate(f):
-            boxes.update((i, j) for j, c in enumerate(line) if c in {'B', '*'})
             board.append(line.translate(trans))
-            j_guy = max([line.find('+'), line.find('K')])
-            if j_guy != -1:
-                guy = (i, j_guy)
+            for j, c in enumerate(line):
+                if c in {'G', '*', '+'}:
+                    targets.add((i, j))
+                if c in {'B', '*'}:
+                    boxes.add((i, j))
+                if c in {'K', '+'}:
+                    guy = (i, j)
 
     assert guy is not None, "player not found on map"
 
-    return board, frozenset(boxes), guy
+    return board, frozenset(boxes), frozenset(targets), guy
 
 
 class Sokoban:
     def __init__(self) -> None:
-        board, boxes, guy = load_state()
+        board, boxes, targets, guy = load_state()
         self.map = board
+        self.targets = targets
         self.fst = (guy, boxes)
         self.moves = {'U': (-1, 0),
                       'D': (1, 0),
@@ -54,9 +59,10 @@ class Sokoban:
     def is_end(self, boxes: Boxes) -> bool:
         pass
 
+
 def main() -> None:
     f = open('zad_output.txt', 'w')
-    board, boxes, guy = load_state()
+    board, boxes, targets, guy = load_state()
     print(*board, sep='\n', file=f)
     print(boxes, sep='\n', file=f)
     print(guy, sep='\n', file=f)
