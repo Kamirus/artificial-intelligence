@@ -119,9 +119,9 @@ class CommandoSeeker(SeekerGrid):
     def search(self, p: Callable[[Poses], float]) -> str:
         if len(self.fst) < 4:
             return super().search(p)
-        
+
         cs = CommandoSeeker(self.map, self.targets, self.fst, self.default)
-        cs.is_end = self.is_reduced
+        cs.is_end = self.is_reduced  # type: ignore
         reduce_moves = super(CommandoSeeker, cs).search(p)
         self.fst = self._spy_state
         self.default = reduce_moves
@@ -149,29 +149,9 @@ class CommandoSeeker(SeekerGrid):
 
     def is_reduced(self, state: Poses) -> bool:
         self._spy_state = state
-        return len(state) < len(self.fst) and print(state) and print(self.fst)
+        return len(state) < len(self.fst)
         # if len(state) < len(self.fst):
         #     # print(self.fst)
         #     # print(state)
         #     return True
         # return False
-
-def main() -> None:
-    with open('zad_output.txt', 'w') as f:
-        c = CommandoReducer(debug=False)
-        # for row in c.full_map:
-        #     print(''.join(row), sep='\n', file=f)
-        moves = c.reduce()
-        # for row in c.full_map:
-        #     print(''.join(row), sep='\n')
-        
-        board, state = split_possible_commandos(c.full_map)
-        res = CommandoSeeker(board, c.targets, state, moves).search_bfs()
-        print(res, file=f)
-        # m2, c = split_possible_commandos(m)
-        # print(*m2, sep='\n', file=f)
-        # print(c, file=f)
-
-
-if __name__ == '__main__':
-    main()
