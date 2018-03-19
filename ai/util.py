@@ -1,8 +1,8 @@
+import abc
 import functools
 import queue
 import random
-
-from typing import Iterable, Tuple, Generic, TypeVar, Any
+from typing import Tuple, FrozenSet, Iterable, Optional, List, Set, Callable, Dict, Generic, TypeVar, Sequence, Any
 
 T = TypeVar('T')
 
@@ -59,9 +59,61 @@ class PQueue(Generic[T]):
         _, _, item = self.q.get()
         return item
 
+
+Out = TypeVar('Out')
+TState = TypeVar('TState')
+
+
+class SeekerGrid(abc.ABC, Generic[TState, Out]):
+    moves = {'U': (-1, 0),
+             'D': (1, 0),
+             'L': (0, -1),
+             'R': (0, 1), }
+    map: List
+    memo: Dict[TState, Out]
+    fst: TState
+    default: Out
+
+    def search(self, p: Callable[[TState], float]) -> Out:
+        """finds shortest sequence of moves to finish state, using cost function p"""
+        q: PQueue[TState] = PQueue()
+        self.memo = {}
+        self.memo[self.fst] = self.default
+        q.push(self.fst, p(self.fst))
+        while q:
+            state = q.pop()
+            if self.is_end(state):
+                return self.memo[state]
+            for moves, next_state in self.next_states(state):
+                if next_state not in self.memo:
+                    self.memo[next_state] = moves
+                    q.push(next_state, p(next_state))
+        raise RuntimeError('Found nothing!')
+
+    @abc.abstractmethod
+    def is_end(self, state: TState) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def next_states(self, state: TState) -> Iterable[Tuple[Out, TState]]:
+        pass
+
+    def search_bfs(self) -> Out:
+        return self.search(lambda _: 0)
+
+    def search_astar(self) -> Out:
+        return self.search(self.f)
+
+    @abc.abstractmethod
+    def f(self, state: TState) -> float:
+        pass
+
+    @abc.abstractmethod
+    def h(self, state: TState) -> float:
+        pass
+
+
 # heuristics
-
-
 class Heuristics:
     @staticmethod
     def manhattan(pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:

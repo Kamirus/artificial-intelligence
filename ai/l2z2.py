@@ -1,5 +1,5 @@
-from util import PQueue, Heuristics
-from typing import Tuple, FrozenSet, Iterable, Optional, List, Set, Callable, Dict
+from util import PQueue, Heuristics, SeekerGrid
+from typing import Tuple, FrozenSet, Iterable, Optional, List, Set, Callable, Dict, Generic, TypeVar, Sequence
 
 Pos = Tuple[int, int]
 Boxes = FrozenSet[Pos]
@@ -33,46 +33,25 @@ def load_state() -> Tuple[Map, Boxes, Boxes, Pos]:
     return board, frozenset(boxes), frozenset(targets), guy
 
 
-class Sokoban:
+class Sokoban(SeekerGrid):
+    moves = {'U': (-1, 0),
+             'D': (1, 0),
+             'L': (0, -1),
+             'R': (0, 1), }
+
     def __init__(self) -> None:
         board, boxes, targets, guy = load_state()
         self.map = board
         self.targets = targets
         self.fst = (guy, boxes)
-        self.moves = {'U': (-1, 0),
-                      'D': (1, 0),
-                      'L': (0, -1),
-                      'R': (0, 1), }
         self.memo: Dict[State, str] = {}
-
-    def search(self, p: Callable[[State], float]) -> str:
-        """finds shortest sequence of moves to finish state, using cost function p"""
-        q: PQueue[State] = PQueue()
-        self.memo = {}
-        self.memo[self.fst] = ''
-        q.push(self.fst, p(self.fst))
-        while q:
-            _, boxes = state = q.pop()
-            if self.is_end(boxes):
-                return self.memo[state]
-            for move, nguy, nboxes in self.next_states(*state):
-                next_state = (nguy, nboxes)
-                if next_state not in self.memo:
-                    self.memo[next_state] = self.memo[state] + move
-                    q.push(next_state, p(next_state))
-        raise RuntimeError('Found nothing!')
-
-    def search_bfs(self) -> str:
-        return self.search(lambda _: 0)
-
-    def search_astar(self) -> str:
-        return self.search(self.f)
+        self.default = ''
 
     def f(self, state: State) -> float:
         # cost to current state + h(state)
         return len(self.memo[state]) + self.h(state)
 
-    def h(self, state) -> float:
+    def h(self, state: State) -> float:
         # d = Heuristics.euclidean
         d = Heuristics.manhattan  # kinda better
 
@@ -86,19 +65,21 @@ class Sokoban:
                   for box in bad_boxes), .0)
         return s
 
-    def next_states(self, guy: Pos, boxes: Boxes) -> Iterable[Tuple[str, Pos, Boxes]]:
+    def next_states(self, state: State) -> Iterable[Tuple[str, State]]:
+        guy, boxes = state
         guy_i, guy_j = guy
+        prev_moves = self.memo[state]
         for move in self.moves:
             i, j = self.moves[move]
             x, y = pos = (guy_i + i, guy_j + j)
             is_box = pos in boxes
             if self._is_place_free(*pos, boxes):
-                yield move, pos, boxes
+                yield prev_moves + move, (pos, boxes)
             elif is_box and self._is_place_free(x + i, y + j, boxes):
-                yield move, pos, boxes - {pos} | {(x + i, y + j)}
+                yield prev_moves + move, (pos, boxes - {pos} | {(x + i, y + j)})
 
-    def is_end(self, boxes: Boxes) -> bool:
-        return self.targets == boxes
+    def is_end(self, state: State) -> bool:
+        return self.targets == state[1]
 
     def _is_place_free(self, i: int, j: int, boxes: Boxes) -> bool:
         return self.map[i][j] in {'.', 'G'} and (i, j) not in boxes
