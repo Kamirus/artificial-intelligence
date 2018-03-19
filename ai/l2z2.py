@@ -1,5 +1,5 @@
-from util import PQueue
-from typing import Tuple, FrozenSet, Iterable, Optional, List, Set, Callable
+from util import PQueue, Heuristics
+from typing import Tuple, FrozenSet, Iterable, Optional, List, Set, Callable, Dict
 
 Pos = Tuple[int, int]
 Boxes = FrozenSet[Pos]
@@ -43,6 +43,7 @@ class Sokoban:
                       'D': (1, 0),
                       'L': (0, -1),
                       'R': (0, 1), }
+        self.memo: Dict[State, str] = {}
 
     def _is_place_free(self, i: int, j: int, boxes: Boxes) -> bool:
         return self.map[i][j] in {'.', 'G'} and (i, j) not in boxes
@@ -65,30 +66,53 @@ class Sokoban:
         return self._search(lambda _: 0)
 
     def search_astar(self) -> str:
+        d = Heuristics.euclidean
+        return self._search(self._get_f(self._get_simple_h(d)))
 
-        return self._search()
+    def _get_f(self, h: Callable[[State], float]) -> Callable[[State], float]:
+        def f(state: State) -> float:
+            return h(state) + len(self.memo[state])
 
-    def _search(self, p: Callable[[State], int]) -> str:
+        return f
+
+    def _get_simple_h(self, d: Callable[[Pos, Pos], float]) -> Callable[[State], float]:
+        """takes function that calculates distance, returns h function"""
+        def h(state: State) -> float:
+            """h(end) = 0, admissible, consistent"""
+            guy, boxes = state
+            free_targets = self.targets - boxes
+            bad_boxes = boxes - self.targets
+            # sum distance to bad boxes
+            s = sum((d(guy, box) for box in bad_boxes), .0)
+            # sum distances from every bad boxe to closest free target
+            s += sum((min(d(box, target) for target in free_targets)
+                      for box in bad_boxes), .0)
+            return s
+
+        return h
+
+    def _search(self, p: Callable[[State], float]) -> str:
         """finds shortest sequence of moves to finish state"""
         q: PQueue[State] = PQueue()
-        memo = {}
+        self.memo = {}
+        self.memo[self.fst] = ''
         q.push(self.fst, p(self.fst))
-        memo[self.fst] = ''
         while q:
             _, boxes = state = q.pop()
             if self.is_end(boxes):
-                return memo[state]
+                return self.memo[state]
             for move, nguy, nboxes in self.next_states(*state):
                 next_state = (nguy, nboxes)
-                if next_state not in memo:
-                    memo[next_state] = memo[state] + move
+                if next_state not in self.memo:
+                    self.memo[next_state] = self.memo[state] + move
                     q.push(next_state, p(next_state))
         raise RuntimeError('Found nothing!')
 
 
 def main() -> None:
     with open('zad_output.txt', 'w') as f:
-        print(Sokoban().search_bfs(), file=f)
+        # print(Sokoban().search_bfs(), file=f)
+        print(Sokoban().search_astar(), file=f)
 
 
 if __name__ == '__main__':

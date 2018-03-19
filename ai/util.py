@@ -2,7 +2,7 @@ import functools
 import queue
 import random
 
-from typing import Iterable, Tuple, Generic, TypeVar
+from typing import Iterable, Tuple, Generic, TypeVar, Any
 
 T = TypeVar('T')
 
@@ -51,10 +51,24 @@ class PQueue(Generic[T]):
         self.cnt = 0
         self.q = queue.PriorityQueue()
 
-    def push(self, item: T, priority: int=0) -> None:
+    def push(self, item: T, priority: Any=1) -> None:
         self.q.put((priority, self.cnt, item))
         self.cnt += 1
 
     def pop(self) -> T:
         _, _, item = self.q.get()
         return item
+
+# heuristics
+
+
+class Heuristics:
+    @staticmethod
+    def manhattan(pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+    @staticmethod
+    def euclidean(pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:
+        x = abs(pos1[0] - pos2[0])
+        y = abs(pos1[1] - pos2[1])
+        return (x * x + y * y) ** 0.5

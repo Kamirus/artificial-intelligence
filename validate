@@ -4,3 +4,4 @@ ZAD=$1
 SRC_FILE=$2
 
 python ai_validator/lista2/validator.py $ZAD python3.6 $SRC_FILE
+# python ai_validator/lista2/validator.py zad2 python3.6 ai/l2z2.py
