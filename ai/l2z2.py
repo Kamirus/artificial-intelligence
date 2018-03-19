@@ -45,8 +45,46 @@ class Sokoban:
                       'R': (0, 1), }
         self.memo: Dict[State, str] = {}
 
-    def _is_place_free(self, i: int, j: int, boxes: Boxes) -> bool:
-        return self.map[i][j] in {'.', 'G'} and (i, j) not in boxes
+    def search(self, p: Callable[[State], float]) -> str:
+        """finds shortest sequence of moves to finish state, using cost function p"""
+        q: PQueue[State] = PQueue()
+        self.memo = {}
+        self.memo[self.fst] = ''
+        q.push(self.fst, p(self.fst))
+        while q:
+            _, boxes = state = q.pop()
+            if self.is_end(boxes):
+                return self.memo[state]
+            for move, nguy, nboxes in self.next_states(*state):
+                next_state = (nguy, nboxes)
+                if next_state not in self.memo:
+                    self.memo[next_state] = self.memo[state] + move
+                    q.push(next_state, p(next_state))
+        raise RuntimeError('Found nothing!')
+
+    def search_bfs(self) -> str:
+        return self.search(lambda _: 0)
+
+    def search_astar(self) -> str:
+        return self.search(self.f)
+
+    def f(self, state: State) -> float:
+        # cost to current state + h(state)
+        return len(self.memo[state]) + self.h(state)
+
+    def h(self, state) -> float:
+        # d = Heuristics.euclidean
+        d = Heuristics.manhattan  # kinda better
+
+        guy, boxes = state
+        free_targets = self.targets - boxes
+        bad_boxes = boxes - self.targets
+        # sum distance to bad boxes
+        s = sum((d(guy, box) for box in bad_boxes), .0)
+        # sum distances from every bad boxe to closest free target
+        s += sum((min(d(box, target) for target in free_targets)
+                  for box in bad_boxes), .0)
+        return s
 
     def next_states(self, guy: Pos, boxes: Boxes) -> Iterable[Tuple[str, Pos, Boxes]]:
         guy_i, guy_j = guy
@@ -62,51 +100,8 @@ class Sokoban:
     def is_end(self, boxes: Boxes) -> bool:
         return self.targets == boxes
 
-    def search_bfs(self) -> str:
-        return self._search(lambda _: 0)
-
-    def search_astar(self) -> str:
-        d = Heuristics.euclidean
-        return self._search(self._get_f(self._get_simple_h(d)))
-
-    def _get_f(self, h: Callable[[State], float]) -> Callable[[State], float]:
-        def f(state: State) -> float:
-            return h(state) + len(self.memo[state])
-
-        return f
-
-    def _get_simple_h(self, d: Callable[[Pos, Pos], float]) -> Callable[[State], float]:
-        """takes function that calculates distance, returns h function"""
-        def h(state: State) -> float:
-            """h(end) = 0, admissible, consistent"""
-            guy, boxes = state
-            free_targets = self.targets - boxes
-            bad_boxes = boxes - self.targets
-            # sum distance to bad boxes
-            s = sum((d(guy, box) for box in bad_boxes), .0)
-            # sum distances from every bad boxe to closest free target
-            s += sum((min(d(box, target) for target in free_targets)
-                      for box in bad_boxes), .0)
-            return s
-
-        return h
-
-    def _search(self, p: Callable[[State], float]) -> str:
-        """finds shortest sequence of moves to finish state"""
-        q: PQueue[State] = PQueue()
-        self.memo = {}
-        self.memo[self.fst] = ''
-        q.push(self.fst, p(self.fst))
-        while q:
-            _, boxes = state = q.pop()
-            if self.is_end(boxes):
-                return self.memo[state]
-            for move, nguy, nboxes in self.next_states(*state):
-                next_state = (nguy, nboxes)
-                if next_state not in self.memo:
-                    self.memo[next_state] = self.memo[state] + move
-                    q.push(next_state, p(next_state))
-        raise RuntimeError('Found nothing!')
+    def _is_place_free(self, i: int, j: int, boxes: Boxes) -> bool:
+        return self.map[i][j] in {'.', 'G'} and (i, j) not in boxes
 
 
 def main() -> None:
