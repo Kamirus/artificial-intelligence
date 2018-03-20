@@ -151,13 +151,14 @@ class CommandoSeeker(SeekerGrid):
         d = self._d
         q = PQueue()
 
-        uniq = set()
+        # uniq = set()
         for pos in self.targets:
             d[pos] = 0
-            for n in self.get_neighbors(pos):
-                uniq.add(n)
-        for n in uniq:
-            q.push(n)
+            q.push(pos)
+            # for n in self.get_neighbors(pos):
+            #     uniq.add(n)
+        # for n in uniq:
+            # q.push(n)
 
         while not q.q.empty():
             x = q.pop()
@@ -165,10 +166,14 @@ class CommandoSeeker(SeekerGrid):
             #     return
             # print(x)
             for n in self.get_neighbors(x):
-                if n in d:
-                    d[x] = min(d.get(x, math.inf), 1 + d[n])
-                else:
+                dn = d.get(n, math.inf)
+                if d[x] + 1 < dn:
+                    d[n] = d[x] + 1
                     q.push(n)
+                # if n in d:
+                #     d[x] = min(d.get(x, math.inf), 1 + d[n])
+                # else:
+                #     q.push(n)
 
     @memo
     def min_distance_to_any_target(self, guy: Pos) -> float:
