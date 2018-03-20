@@ -74,7 +74,7 @@ class SeekerGrid(abc.ABC, Generic[TState, Out]):
     fst: TState
     default: Out
 
-    def search(self, p: Callable[[TState], float]) -> Out:
+    def search(self, p: Callable[[TState], float], **kwargs) -> Out:
         """finds shortest sequence of moves to finish state, using cost function p"""
         q: PQueue[TState] = PQueue()
         self.memo = {}
@@ -98,11 +98,11 @@ class SeekerGrid(abc.ABC, Generic[TState, Out]):
     def next_states(self, state: TState) -> Iterable[Tuple[Out, TState]]:
         pass
 
-    def search_bfs(self) -> Out:
-        return self.search(lambda _: 0)
+    def search_bfs(self, **kwargs) -> Out:
+        return self.search(lambda _: 0, **kwargs)
 
-    def search_astar(self) -> Out:
-        return self.search(self.f)
+    def search_astar(self, **kwargs) -> Out:
+        return self.search(self.f, **kwargs)
 
     @abc.abstractmethod
     def f(self, state: TState) -> float:

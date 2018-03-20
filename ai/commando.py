@@ -112,12 +112,11 @@ class CommandoSeeker(SeekerGrid):
     def __init__(self, board: Map, targets: Poses, state: Poses, moves: str) -> None:
         self.targets = targets
         self.map, self.fst = board, state
-        # self.initial_moves = moves
         self.memo: Dict[Poses, str] = {}
         self.default = moves
 
-    def search(self, p: Callable[[Poses], float]) -> str:
-        if len(self.fst) < 4:
+    def search(self, p: Callable[[Poses], float], reduce=False, **kwargs) -> str:
+        if not reduce or len(self.fst) < 4:
             return super().search(p)
 
         cs = CommandoSeeker(self.map, self.targets, self.fst, self.default)
@@ -126,7 +125,7 @@ class CommandoSeeker(SeekerGrid):
         self.fst = self._spy_state
         self.default = reduce_moves
 
-        return self.search(p)
+        return self.search(p, reduce=reduce)
 
     def f(self, state) -> float:
         raise NotImplemented
