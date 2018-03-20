@@ -50,13 +50,16 @@ class PQueue(Generic[T]):
     def __init__(self) -> None:
         self.cnt = 0
         self.q = queue.PriorityQueue()
+        self.q
 
     def push(self, item: T, priority: Any=1) -> None:
         self.q.put((priority, self.cnt, item))
+        # print('push:', priority)
         self.cnt += 1
 
     def pop(self) -> T:
         _, _, item = self.q.get()
+        # print('_____', item)
         return item
 
 
@@ -74,6 +77,12 @@ class SeekerGrid(abc.ABC, Generic[TState, Out]):
     fst: TState
     default: Out
 
+    def _print(self, state):
+        for i, row in enumerate(self.map):
+            for j, c in enumerate(row):
+                print('S' if (i, j) in state else c, end='')
+            print()
+
     def search(self, p: Callable[[TState], float], **kwargs) -> Out:
         """finds shortest sequence of moves to finish state, using cost function p"""
         q: PQueue[TState] = PQueue()
@@ -82,6 +91,7 @@ class SeekerGrid(abc.ABC, Generic[TState, Out]):
         q.push(self.fst, p(self.fst))
         while q:
             state = q.pop()
+            # self._print(state)
             if self.is_end(state):
                 return self.memo[state]
             for moves, next_state in self.next_states(state):

@@ -5,3 +5,4 @@
 
 # python ai_validator/lista2/validator.py $ZAD python3.6 $SRC_FILE
 python ai_validator/lista2/validator.py --cases $1 zad4 python3.6 ai/commando.py
+# python ai_validator/lista2/validator.py  zad4 python3.6 ai/l2z4.py

@@ -1,6 +1,10 @@
 import random
-from util import SeekerGrid
+import sys
+import math
+from util import SeekerGrid, Heuristics, memo, PQueue
 from typing import Tuple, FrozenSet, Iterable, Optional, List, Set, Callable, Dict
+
+sys.setrecursionlimit(5000)
 
 Pos = Tuple[int, int]
 Poses = FrozenSet[Pos]
@@ -115,6 +119,12 @@ class CommandoSeeker(SeekerGrid):
         self.memo: Dict[Poses, str] = {}
         self.default = moves
 
+    def search_astar(self, **kwargs):
+        # print('start')
+        self.calc_min_distances_to_any_target()
+        # print('done')
+        return super().search_astar(**kwargs)
+
     def search(self, p: Callable[[Poses], float], reduce=False, **kwargs) -> str:
         if not reduce or len(self.fst) < 4:
             return super().search(p)
@@ -128,20 +138,69 @@ class CommandoSeeker(SeekerGrid):
         return self.search(p, reduce=reduce)
 
     def f(self, state) -> float:
-        raise NotImplemented
+        x = len(self.memo[state]) + self.h(state)
+        # print(state, x)
+        return x
 
-    def h(self, state) -> float:
-        raise NotImplemented
+    @memo
+    def h(self, state: Poses) -> float:
+        return max(self.min_distance_to_any_target(guy) for guy in state)
+
+    def calc_min_distances_to_any_target(self) -> None:
+        self._d: Dict[Pos, float] = {}
+        d = self._d
+        q = PQueue()
+
+        uniq = set()
+        for pos in self.targets:
+            d[pos] = 0
+            for n in self.get_neighbors(pos):
+                uniq.add(n)
+        for n in uniq:
+            q.push(n)
+
+        while not q.q.empty():
+            x = q.pop()
+            # if d.get(x, 0) > 23:
+            #     return
+            # print(x)
+            for n in self.get_neighbors(x):
+                if n in d:
+                    d[x] = min(d.get(x, math.inf), 1 + d[n])
+                else:
+                    q.push(n)
+
+    @memo
+    def min_distance_to_any_target(self, guy: Pos) -> float:
+        d = Heuristics.manhattan
+        return self._d[guy] if guy in self._d \
+            else min(d(guy, t) for t in self.targets)
 
     def next_states(self, state: Poses) -> Iterable[Tuple[str, Poses]]:
         prev_moves = self.memo[state]
+        return tuple((prev_moves + move, new_state)
+                     for move, new_state in self._next_states(state))
+        # for move in self.moves:
+        #     i, j = self.moves[move]
+        #     new_state = frozenset((x + i, y + j)
+        #                            if self.map[x + i][y + j] != '#'
+        #                            else (x, y)
+        #                            for x, y in state)
+        #     yield prev_moves + move, new_state
+
+    def _next_states(self, state):
         for move in self.moves:
             i, j = self.moves[move]
-            new_state = frozenset({(x + i, y + j)
-                                   if self.map[x + i][y + j] != '#'
-                                   else (x, y)
-                                   for x, y in state})
-            yield prev_moves + move, new_state
+            new_state = frozenset((x + i, y + j)
+                                  if self.map[x + i][y + j] != '#'
+                                  else (x, y)
+                                  for x, y in state)
+            yield move, new_state
+
+    def get_neighbors(self, pos):
+        for _, ns in self._next_states(frozenset({pos})):
+            for n in ns:
+                yield n
 
     def is_end(self, state: Poses) -> bool:
         return not bool(state - self.targets)  # is_empty
