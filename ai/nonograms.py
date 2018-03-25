@@ -5,6 +5,7 @@ from functools import lru_cache
 from util import get_columns, init_random_matrix, neg_kth, memo
 from typing import Callable, Tuple, Iterable, Optional
 
+random.seed(6473821)
 
 class SimpleNonogram:
     def __init__(self, row_c, col_c):
