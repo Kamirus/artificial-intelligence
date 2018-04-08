@@ -129,38 +129,31 @@ allValidRows row c = filter (rowIn row) $ allRows (V.length row) c
 inferAllCommon :: Row -> Constraint -> Row
 inferAllCommon row c = foldl1 intersectRow $ allValidRows row c
 
-inferRows :: Nonogram -> Nonogram
-inferRows nonogram = Nonogram rowC colC $ b // bulk
+inferAllCommon' :: Row -> Constraint -> Either String Row
+inferAllCommon' row c =
+  case allValidRows row c of
+  [] -> Left "allValidRows returned empty list"
+  xs -> Right $ foldl1 intersectRow xs
+
+inferRows :: Nonogram -> Either String Nonogram
+inferRows nonogram = Nonogram rowC colC <$> (b //) <$> (zip [0..] <$> bulk)
   where
     b = board nonogram
     rowC = rows nonogram
     colC = cols nonogram
-    bulk = G.ifoldr (\i c acc -> (i, inferAllCommon (b ! i) c) : acc) [] rowC
+    bulk = G.ifoldr (\i c acc -> (:) <$> inferAllCommon' (b ! i) c <*> acc) (Right []) rowC
 
 transposeBoard :: Board -> Board
 transposeBoard =
   G.fromList . foldr (\rowL acc -> G.fromList rowL : acc) [] . transpose . G.foldr (\row acc -> G.toList row : acc) []
 
-inferCols :: Nonogram -> Nonogram
-inferCols nonogram = Nonogram rowC colC $ transposeBoard $ bT // bulk
+inferCols :: Nonogram -> Either String Nonogram
+inferCols nonogram = Nonogram rowC colC <$> transposeBoard <$> (bT // ) <$> zip [0..] <$> bulk
   where
     bT = transposeBoard $ board nonogram
     rowC = rows nonogram
     colC = cols nonogram
-    bulk = G.ifoldr (\i c acc -> (i, inferAllCommon (bT ! i) c) : acc) [] colC
+    bulk = G.ifoldr (\i c acc -> (:) <$> inferAllCommon' (bT ! i) c <*> acc) (Right []) colC
 
-inferStep :: Nonogram -> Maybe Nonogram
-inferStep nonogram = if nonogram == newN then Nothing else Just newN
-  where
-    newN = aux nonogram
-    aux = inferCols . inferRows
-
-test =
-  let row = V.generate 5 (const Blank)
-      n = V.length row
-      c = [3]
-      blocksLen = length c
-   in do print $ inferAllCommon row c
-         print $ allValidRows row c
-         print $ allRows n c
-         print $ allOffsets (n - sum c - (length c - 1)) blocksLen
+inferStep :: Nonogram -> Either String Nonogram
+inferStep nonogram = inferRows nonogram >>= inferCols
