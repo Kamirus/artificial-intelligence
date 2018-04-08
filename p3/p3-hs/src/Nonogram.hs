@@ -44,6 +44,7 @@ rowIn :: Row -> Row -> Bool
 --rowIn a b = V.all (True ==) $ V.zipWith in' a b
 rowIn a = V.ifoldr (\i x acc -> acc && (a V.! i) `in'` x) True
   where
+    in' X Checked     = False
     in' Checked X     = False
     in' Checked Blank = False
     in' _ _           = True
@@ -86,9 +87,8 @@ test =
   let row = V.generate 5 (const Blank)
       n = V.length row
       c = [3]
-      blocksLen = length c in
-  do
-    print $ inferAllCommon row c
-    print $ allValidRows row c
-    print $ allRows n c
-    print $ allOffsets (n - sum c - (length c - 1)) blocksLen
+      blocksLen = length c
+   in do print $ inferAllCommon row c
+         print $ allValidRows row c
+         print $ allRows n c
+         print $ allOffsets (n - sum c - (length c - 1)) blocksLen
