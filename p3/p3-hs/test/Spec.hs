@@ -25,20 +25,20 @@ main =
       describe "allValidRows" $ do
         let empty = V.generate 4 (const N.Blank)
             one = V.fromList [N.Blank, N.Checked, N.Blank, N.Blank]
-            v1 = V.fromList [N.Checked, N.Checked, N.Blank, N.Blank]
-            v2 = V.fromList [N.Blank, N.Checked, N.Checked, N.Blank]
-            v3 = V.fromList [N.Blank, N.Blank, N.Checked, N.Checked]
+            v1 = V.fromList [N.Checked, N.Checked, N.X, N.X]
+            v2 = V.fromList [N.X, N.Checked, N.Checked, N.X]
+            v3 = V.fromList [N.X, N.X, N.Checked, N.Checked]
             v4 = V.fromList [N.Checked, N.Checked, N.Checked, N.Checked]
         it "empty; 2" $ do N.allValidRows empty [2] `shouldMatchList` [v1, v2, v3]
         it "one; 2" $ do N.allValidRows one [2] `shouldMatchList` [v1, v2]
         it "empty; 4" $ do N.allValidRows empty [4] `shouldMatchList` [v4]
         it "empty 5; 1-1-1" $ do
           N.allValidRows (V.generate 5 (const N.Blank)) [1, 1, 1] `shouldMatchList`
-            [V.fromList [N.Checked, N.Blank, N.Checked, N.Blank, N.Checked]]
+            [V.fromList [N.Checked, N.X, N.Checked, N.X, N.Checked]]
         it "partial; " $ do
           let v = V.fromList [N.Blank, N.Blank, N.Checked, N.Checked, N.Checked, N.Blank, N.Blank, N.Blank, N.Checked]
           N.allValidRows v [5, 1] `shouldMatchList`
-            [ V.fromList [N.Checked, N.Checked, N.Checked, N.Checked, N.Checked, N.Blank, N.Blank, N.Blank, N.Checked]
-            , V.fromList [N.Blank, N.Checked, N.Checked, N.Checked, N.Checked, N.Checked, N.Blank, N.Blank, N.Checked]
-            , V.fromList [N.Blank, N.Blank, N.Checked, N.Checked, N.Checked, N.Checked, N.Checked, N.Blank, N.Checked]
+            [ V.fromList [N.Checked, N.Checked, N.Checked, N.Checked, N.Checked, N.X, N.X, N.X, N.Checked]
+            , V.fromList [N.X, N.Checked, N.Checked, N.Checked, N.Checked, N.Checked, N.X, N.X, N.Checked]
+            , V.fromList [N.X, N.X, N.Checked, N.Checked, N.Checked, N.Checked, N.Checked, N.X, N.Checked]
             ]

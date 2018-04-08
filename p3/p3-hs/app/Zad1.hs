@@ -20,8 +20,8 @@ readInput = do
 main :: IO ()
 main = do
   (rows, cols) <- readInput
-  -- print rows
-  -- print cols
+  print rows
+  print cols
   let nonogram = N.mkNonogram rows cols
   res <- aux nonogram
   N.printBoard $ N.board res
@@ -42,8 +42,8 @@ main = do
   where
     aux :: N.Nonogram -> IO N.Nonogram
     aux n = do
-      -- N.printBoardDebug $ N.board n
-      -- putStrLn ""
+      N.printBoardDebug $ N.board n
+      putStrLn ""
       case N.inferStep n of
         Nothing -> return n
         Just newN -> aux newN
