@@ -1,8 +1,10 @@
 module Nonogram.Inference where
 
-import           Data.List           (transpose)
-import           Data.Vector.Generic ((!), (//))
-import qualified Data.Vector.Generic as G
+import           Control.Monad               (forM_)
+import           Data.List                   (transpose)
+import           Data.Vector.Generic         ((!), (//))
+import qualified Data.Vector.Generic         as G
+import           Data.Vector.Mutable         (new, unsafeWrite)
 import           Nonogram
 
 intersectRow :: Row -> Row -> Row
@@ -33,8 +35,8 @@ allOffsets extraBlanks blocksNo = do
       rest <- aux (blanks - off) (n - 1)
       return $ (1 + off) : rest
 
-buildRow :: Int -> Constraint -> [Int] -> Row
-buildRow n c offsets =
+buildRow' :: Int -> Constraint -> [Int] -> Row
+buildRow' n c offsets =
   if G.length row == n
     then row
     else row G.++ (G.generate (n - G.length row) $ const X)
@@ -42,6 +44,19 @@ buildRow n c offsets =
     f :: Int -> Int -> [Field]
     f offset blockLen = [X | _ <- [1 .. offset]] ++ [Checked | _ <- [1 .. blockLen]]
     row = G.fromList $ concat $ zipWith f offsets c
+
+buildRow :: Int -> Constraint -> [Int] -> Row
+buildRow n c offsets =
+  G.create $ do
+    row <- new n
+    forM_ [0 .. n - 1] (\i -> unsafeWrite row i X)
+    aux row 0 offsets c
+    return row
+  where
+    aux _ _ [] [] = return ()
+    aux row i (off:offsets) (c:cs) = do
+      forM_ [i + off .. i + off + c - 1] (\o -> unsafeWrite row o Checked)
+      aux row (i + off + c) offsets cs
 
 allRows :: Int -> Constraint -> [Row]
 allRows n c = [buildRow n c off | off <- allOffsets additionalBlanks blocksNo]
@@ -83,3 +98,11 @@ inferCols nonogram = Nonogram rowC colC <$> transposeBoard <$> (bT //) <$> zip [
 
 inferStep :: Nonogram -> Either String Nonogram
 inferStep nonogram = inferRows nonogram >>= inferCols
+
+inferMax :: Nonogram -> Either String Nonogram
+inferMax n = inferStep n >>= aux n
+  where
+    aux :: Nonogram -> Nonogram -> Either String Nonogram
+    aux old new
+      | old == new = return new
+      | otherwise = inferMax new
