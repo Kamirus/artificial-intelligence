@@ -5,16 +5,6 @@ import           Nonogram.Inference
 import           Nonogram.Solver
 import           Nonogram.Util
 
-infer :: Nonogram -> IO Nonogram
-infer n = do
-  print "infer"
-  case inferStep n of
-    Left msg -> print msg >> return n
-    Right newN ->
-      if n == newN
-        then return n
-        else infer newN
-
 main :: IO ()
 main = do
   (rows, cols) <- readInput
