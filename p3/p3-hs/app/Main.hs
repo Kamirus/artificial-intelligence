@@ -14,4 +14,3 @@ main = do
   -- case inferMax nonogram of
   --   Left msg -> print msg
   --   Right n -> printBoard $ board n
-

@@ -1,4 +1,5 @@
-module Zad1 where
+module Zad1
+where
 
 import           Nonogram
 import           Nonogram.Inference
@@ -9,5 +10,5 @@ main = do
   (rows, cols) <- readInput
   let nonogram = mkNonogram rows cols
   case inferMax nonogram of
-    Left msg  -> print msg
+    Left  msg -> print msg
     Right res -> printBoard $ board res

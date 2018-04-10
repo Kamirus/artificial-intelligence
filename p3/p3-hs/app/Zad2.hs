@@ -1,4 +1,5 @@
-module Zad2 where
+module Zad2
+where
 
 import           Nonogram
 import           Nonogram.Inference
@@ -9,5 +10,5 @@ main :: IO ()
 main = do
   (rows, cols) <- readInput
   let nonogram = mkNonogram rows cols
-  let res = solve nonogram
+  let res      = solve nonogram
   printBoard $ board res
