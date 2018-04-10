@@ -8,8 +8,6 @@ import           Nonogram.Util
 main :: IO ()
 main = do
   (rows, cols) <- readInput
---  print rows
---  print cols
   let nonogram = mkNonogram rows cols
   let res = solve nonogram
   printBoard $ board res

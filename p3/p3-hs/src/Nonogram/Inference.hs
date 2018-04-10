@@ -1,10 +1,10 @@
 module Nonogram.Inference where
 
-import           Control.Monad               (forM_)
-import           Data.List                   (transpose)
-import           Data.Vector.Generic         ((!), (//))
-import qualified Data.Vector.Generic         as G
-import           Data.Vector.Mutable         (new, unsafeWrite)
+import           Control.Monad       (forM_)
+import           Data.List           (transpose)
+import           Data.Vector.Generic ((!), (//))
+import qualified Data.Vector.Generic as G
+import           Data.Vector.Mutable (new, unsafeWrite)
 import           Nonogram
 
 intersectRow :: Row -> Row -> Row
