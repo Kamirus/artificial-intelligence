@@ -77,7 +77,7 @@ inferAllCommon' row c =
     xs -> Right $ foldl1 intersectRow xs
 
 inferRows :: Nonogram -> Either String Nonogram
-inferRows nonogram = Nonogram rowC colC <$> (b //) <$> (zip [0 ..] <$> bulk)
+inferRows nonogram = Nonogram rowC colC . (b //) <$> (zip [0 ..] <$> bulk)
   where
     b = board nonogram
     rowC = rows nonogram
@@ -86,10 +86,10 @@ inferRows nonogram = Nonogram rowC colC <$> (b //) <$> (zip [0 ..] <$> bulk)
 
 transposeBoard :: Board -> Board
 transposeBoard =
-  G.fromList . foldr (\rowL acc -> G.fromList rowL : acc) [] . transpose . G.foldr (\row acc -> G.toList row : acc) []
+  G.fromList . map G.fromList . transpose . G.foldr (\row acc -> G.toList row : acc) []
 
 inferCols :: Nonogram -> Either String Nonogram
-inferCols nonogram = Nonogram rowC colC <$> transposeBoard <$> (bT //) <$> zip [0 ..] <$> bulk
+inferCols nonogram = Nonogram rowC colC . transposeBoard . (bT //) . zip [0 ..] <$> bulk
   where
     bT = transposeBoard $ board nonogram
     rowC = rows nonogram

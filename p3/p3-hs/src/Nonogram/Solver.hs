@@ -22,7 +22,7 @@ solve nonogram = head $ aux nonogram 0 []
   where
     n = G.length $ board nonogram
     aux :: Nonogram -> Int -> [Int] -> [Nonogram]
-    aux nonogram i visited = do
+    aux nonogram i visited =
       case inferMax nonogram of
         Left msg -> fail msg
         Right newN -> do
@@ -30,4 +30,4 @@ solve nonogram = head $ aux nonogram 0 []
           guessedRow <- allValidRows (board newN ! i) (rows newN ! i)
           case bestGuess nonogram visited' of
             Nothing -> return nonogram
-            Just nextI -> aux (newN {board = (board newN) // [(i, guessedRow)]}) nextI visited'
+            Just nextI -> aux (newN {board = board newN // [(i, guessedRow)]}) nextI visited'

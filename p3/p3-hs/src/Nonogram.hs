@@ -26,7 +26,7 @@ data Nonogram = Nonogram
   , board :: Board
   } deriving (Show, Eq)
 
-mkNonogram :: [[Int]] -> [[Int]] -> Nonogram
+mkNonogram :: [Constraint] -> [Constraint] -> Nonogram
 mkNonogram raw_rows raw_cols = Nonogram rows cols board
   where
     [rows, cols] = map V.fromList [raw_rows, raw_cols]

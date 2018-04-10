@@ -19,8 +19,7 @@ readInput = do
       return $ row : rest
 
 printBoard :: Board -> IO ()
-printBoard b = do
-  V.mapM_ printRow b
+printBoard = V.mapM_ printRow
   where
     printRow row = V.mapM_ printX row >> putStrLn ""
     printX X       = putStr "."
@@ -28,8 +27,7 @@ printBoard b = do
     printX Checked = putStr "#"
 
 printBoardDebug :: Board -> IO ()
-printBoardDebug b = do
-  V.mapM_ printRow b
+printBoardDebug = V.mapM_ printRow
   where
     printRow row = V.mapM_ printX row >> putStrLn ""
     printX X       = putStr " X "
