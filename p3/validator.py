@@ -516,7 +516,7 @@ zad1:
         ....##.....#...#..##        
 '''
     # Backtracking
-u'''
+    u'''
 zad2:
   defaults:
     timeout: 300 # second
@@ -724,8 +724,8 @@ zad2:
         ....####.##..........#...
         .......###...............                               
 '''
-#Sudoku
-"""
+    #Sudoku
+    """
 zad5:
   defaults:
     timeout: 2 # second
@@ -770,8 +770,8 @@ zad5:
         [3,8,2,4,5,9,6,7,1,4,7,1,3,8,6,2,9,5,5,9,6,7,2,1,8,4,3,6,1,9,2,4,7,5,3,8,7,5,3,1,9,8,4,6,2,8,2,4,5,6,3,7,1,9,1,3,5,8,7,4,9,2,6,2,6,7,9,1,5,3,8,4,9,4,8,6,3,2,1,5,7]      
 """
 
-# Burze
-"""
+    # Burze
+    """
 zad6:
   defaults:
     timeout: 8 # second
@@ -889,12 +889,13 @@ zad6:
         8 14 0
       out: |
         [0,0,1,1,1,1,0,1,1,1,1,0,1,1,1,0,0,0,0,0,1,1,1,1,0,1,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1,0,1,1,1,0,0,0,0,1,1,1,1,0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,1,1,0,1,1,0,0,0,0,1,1,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,1,1,0,0]
- """       
- 
+ """
+
 )
 DEFAULT_TESTSET = yaml.load(DEFAULT_TESTSET_YAML)
 
 # Comparison functions
+
 
 class ValidatorException(Exception):
     pass
@@ -930,6 +931,7 @@ def perlines_validator(case, process_out, line_compare_fun=compare):
             zip(process_lines, ref_lines)):
         line_compare_fun(proc_line, ref_line, "Line %d contents" % (lnum + 1,))
 
+
 def prolog_validator(case, process_out, line_compare_fun=compare):
     """
     Compare two strings line by line, ignoring whitespaces.
@@ -937,13 +939,12 @@ def prolog_validator(case, process_out, line_compare_fun=compare):
     ref_lines = whitespace_normalize(case['out']).split('\n')
     with open('solution.pl', 'w') as prolog_file:
         prolog_file.write(process_out)
-        
-    
-    os.system('swipl -c solution.pl') 
-    
+
+    os.system('swipl -q -c solution.pl > prolog_result.txt')
+
     with open('prolog_result.txt', 'r') as prolog_result:
         process_out = prolog_result.read()
-        
+
     process_lines = whitespace_normalize(process_out).split('\n')
     compare(len(process_lines), len(ref_lines), "Number of lines")
     for lnum, (proc_line, ref_line) in enumerate(
@@ -951,6 +952,8 @@ def prolog_validator(case, process_out, line_compare_fun=compare):
         line_compare_fun(proc_line, ref_line, "Line %d contents" % (lnum + 1,))
 
 # Comparison function utils
+
+
 def ensure_unicode(obj):
     if sys.version_info[0] == 3:
         if isinstance(obj, str):
@@ -1175,7 +1178,8 @@ if __name__ == '__main__':
     for case_num, case_def in problem_cases:
         print('Running case %d... ' % (case_num,), end='')
         try:
-            timeout_multiplier = float(args.timeout_multiplier) if args.timeout_multiplier and float(args.timeout_multiplier) > 1 else 1
+            timeout_multiplier = float(args.timeout_multiplier) if args.timeout_multiplier and float(
+                args.timeout_multiplier) > 1 else 1
             if args.stdio:
                 case_def['input_file'] = '<stdin>'
                 case_def['output_file'] = '<stdout>'
@@ -1212,4 +1216,3 @@ if __name__ == '__main__':
         cases_opt = '--cases ' + ','.join([str(fc) for fc in failed_cases])
         print('python validator.py%s %s %s %s' %
               (misc_opts, cases_opt, args.problem, program))
-
