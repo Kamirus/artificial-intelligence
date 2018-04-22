@@ -55,7 +55,7 @@ class Board:
 
     def __init__(self):
         self.board = initial_board()
-        self.fields = {(j, i) for i in range(M) for j in range(M)
+        self.fields = {(i, j) for i in range(M) for j in range(M)
                        if self.board[i][j] == None}
         self.move_list = []
         self.history = []
@@ -82,18 +82,13 @@ class Board:
         for i in range(M):
             for j in range(M):
                 if self.board[i][j] == 1:
-                    kolko(j, i, 'black')
+                    kolko(j, M - 1 - i, 'black')
                 if self.board[i][j] == 0:
-                    kolko(j, i, 'white')
+                    kolko(j, M - 1 - i, 'white')
 
     def moves(self, player: int) -> List[Tuple[int, int]]:
-        res = []
-        for (x, y) in self.fields:
-            if any(self.can_beat(x, y, direction, player) for direction in Board.dirs):
-                res.append((x, y))
-        # if not res:
-        #     return [None]
-        return res
+        return [(x, y) for (x, y) in self.fields
+                if any(self.can_beat(x, y, dir, player) for dir in Board.dirs)]
 
     def can_beat(self, x: int, y: int, direction: Tuple[int, int], player: int) -> bool:
         dx, dy = direction
@@ -108,7 +103,7 @@ class Board:
 
     def get(self, x: int, y: int) -> Optional[int]:
         if 0 <= x < M and 0 <= y < M:
-            return self.board[y][x]
+            return self.board[x][y]
         return None
 
     def do_move(self, move: Optional[Tuple[int, int]], player: int) -> None:
@@ -119,7 +114,7 @@ class Board:
             return
         x, y = move
         x0, y0 = move
-        self.board[y][x] = player
+        self.board[x][y] = player
         self.fields.remove(move)  # -= set([move])
         for dx, dy in self.dirs:
             x, y = x0, y0
@@ -132,17 +127,17 @@ class Board:
                 y += dy
             if self.get(x, y) == player:
                 for (nx, ny) in to_beat:
-                    self.board[ny][nx] = player
+                    self.board[nx][ny] = player
 
     def result(self) -> int:
         res = 0
-        for y in range(M):
-            for x in range(M):
-                b = self.board[y][x]
+        for x in range(M):
+            for y in range(M):
+                b = self.board[x][y]
                 if b == 0:
-                    res -= 1
-                elif b == 1:
                     res += 1
+                elif b == 1:
+                    res -= 1
         return res
 
     def terminal(self) -> bool:
@@ -154,9 +149,7 @@ class Board:
 
     def random_move(self, player: int) -> Optional[Tuple[int, int]]:
         ms = self.moves(player)
-        if ms:
-            return random.choice(ms)
-        return None
+        return random.choice(ms) if ms else None
 
 
 player = 0
