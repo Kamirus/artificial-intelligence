@@ -1,5 +1,6 @@
 import random
 import sys
+from math import inf
 from collections import defaultdict as dd
 from turtle import *
 from typing import List, Tuple, Optional
@@ -7,7 +8,7 @@ from typing import List, Tuple, Optional
 #####################################################
 # turtle graphic
 #####################################################
-tracer(0, 1)  # type: ignore
+# tracer(0, 1)  # type: ignore
 
 BOK = 30
 SX = -100
@@ -52,6 +53,22 @@ def initial_board():
 class Board:
     dirs = [(0, 1), (1, 0), (-1, 0), (0, -1),
             (1, 1), (-1, -1), (1, -1), (-1, 1)]
+
+    p0 = 8.0
+    p1 = 5.0
+    p2 = 2.0
+    p3 = 1.0
+    p4 = 0.5
+    p5 = 0.2
+
+    weights = ((p0, p2, p1, p1, p1, p1, p2, p0),
+               (p2, p2, p4, p4, p4, p4, p2, p2),
+               (p1, p4, p3, p5, p5, p3, p4, p1),
+               (p1, p4, p5, p3, p3, p5, p4, p1),
+               (p1, p4, p5, p3, p3, p5, p4, p1),
+               (p1, p4, p3, p5, p5, p3, p4, p1),
+               (p2, p2, p4, p4, p4, p4, p2, p2),
+               (p0, p2, p1, p1, p1, p1, p2, p0),)
 
     def __init__(self):
         self.board = initial_board()
@@ -129,6 +146,11 @@ class Board:
                 for (nx, ny) in to_beat:
                     self.board[nx][ny] = player
 
+    def undo_last_move(self) -> None:
+        assert len(self.history) and len(self.move_list)
+        self.board = self.history.pop()
+        self.fields.add(self.move_list.pop())
+
     def result(self) -> int:
         res = 0
         for x in range(M):
@@ -151,24 +173,102 @@ class Board:
         ms = self.moves(player)
         return random.choice(ms) if ms else None
 
+    def agent_move(self, player: int) -> Optional[Tuple[int, int]]:
+        def key(move):
+            self.do_move(move, player)
+            v = self.min_value(1 - player, -inf, inf, 0)
+            self.undo_last_move()
+            return v
+        moves = self.moves(player)
+        return max(moves, key=key) if moves else None
 
-player = 0
-B = Board()
+    def h(self, player: int) -> float:
+        return sum(self.weights[i][j] * (1 if player == piece else -1)
+                   for i, row in enumerate(self.board)
+                   for j, piece in enumerate(row))
 
-while True:
+    max_depth = 3
+
+    def max_value(self, player: int, alpha: float, beta: float, depth: int) -> float:
+        if self.terminal():
+            return self.result()
+        if depth >= self.max_depth:
+            return self.h(player)
+
+        value = -inf
+        for move in self.moves(player):
+            self.do_move(move, player)
+            value = max(value,
+                        self.min_value(1 - player, alpha, beta, depth + 1))
+            self.undo_last_move()
+            if value >= beta:
+                return value
+            alpha = max(alpha, value)
+        return value
+
+    def min_value(self, player: int, alpha: float, beta: float, depth: int) -> float:
+        if self.terminal():
+            return self.result()
+        if depth >= self.max_depth:
+            return self.h(player)
+
+        value = inf
+        for move in self.moves(player):
+            self.do_move(move, player)
+            value = min(value,
+                        self.max_value(1 - player, alpha, beta, depth + 1))
+            self.undo_last_move()
+            if value <= alpha:
+                return value
+            beta = min(beta, value)
+        return value
+
+
+def agent_vs_random() -> int:
+    player = 0  # agent
+    B = Board()
+
+    while not B.terminal():
+        # B.draw()
+        if player:
+            # print(f'random {player}')
+            m = B.random_move(player)
+        else:
+            # print(f'agent {player}')
+            m = B.agent_move(player)
+        B.do_move(m, player)
+        player = 1-player
+
+    # B.draw()
+    return B.result()
+
+
+def turtle_random():
+    player = 0
+    B = Board()
+
+    while True:
+        B.draw()
+        B.show()
+        m = B.random_move(player) if player else B.agent_move(player)
+        B.do_move(m, player)
+        player = 1-player
+        input()  # raw_input()
+        if B.terminal():
+            break
+
     B.draw()
     B.show()
-    m = B.random_move(player)
-    B.do_move(m, player)
-    player = 1-player
-    input()  # raw_input()
-    if B.terminal():
-        break
+    print('Result', B.result())
+    input('Game over!')  # raw_input('Game over!')
 
-B.draw()
-B.show()
-print('Result', B.result())
-input('Game over!')  # raw_input('Game over!')
+    sys.exit(0)
 
 
-sys.exit(0)
+def main():
+    x = sum(agent_vs_random() > 0 for _ in range(100))
+    print(x)
+
+
+if __name__ == '__main__':
+    main()
