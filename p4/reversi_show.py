@@ -51,134 +51,112 @@ def initial_board():
     return B
 
 
-class Board:
-    dirs = [(0, 1), (1, 0), (-1, 0), (0, -1),
-            (1, 1), (-1, -1), (1, -1), (-1, 1)]
+dirs = [(0, 1), (1, 0), (-1, 0), (0, -1),
+        (1, 1), (-1, -1), (1, -1), (-1, 1)]
 
-    p0 = 8.0
-    p1 = 5.0
-    p2 = 2.0
-    p3 = 1.0
-    p4 = 0.5
-    p5 = 0.2
+p0 = 8.0
+p1 = 5.0
+p2 = 2.0
+p3 = 1.0
+p4 = 0.5
+p5 = 0.2
 
-    weights = ((p0, p2, p1, p1, p1, p1, p2, p0),
-               (p2, p2, p4, p4, p4, p4, p2, p2),
-               (p1, p4, p3, p5, p5, p3, p4, p1),
-               (p1, p4, p5, p3, p3, p5, p4, p1),
-               (p1, p4, p5, p3, p3, p5, p4, p1),
-               (p1, p4, p3, p5, p5, p3, p4, p1),
-               (p2, p2, p4, p4, p4, p4, p2, p2),
-               (p0, p2, p1, p1, p1, p1, p2, p0),)
+weights = ((p0, p2, p1, p1, p1, p1, p2, p0),
+           (p2, p2, p4, p4, p4, p4, p2, p2),
+           (p1, p4, p3, p5, p5, p3, p4, p1),
+           (p1, p4, p5, p3, p3, p5, p4, p1),
+           (p1, p4, p5, p3, p3, p5, p4, p1),
+           (p1, p4, p3, p5, p5, p3, p4, p1),
+           (p2, p2, p4, p4, p4, p4, p2, p2),
+           (p0, p2, p1, p1, p1, p1, p2, p0),)
 
-    def __init__(self):
-        self.board = initial_board()
-        # self.fields = {(i, j) for i in range(M) for j in range(M)
-        #                if self.board[i][j] == None}
-        # self.move_list = []
-        # self.history = []
 
-    def draw(self):
-        for i in range(M):
-            res = []
-            for j in range(M):
-                b = self.board[i][j]
-                if b == None:
-                    res.append('.')
-                elif b == 1:
-                    res.append('#')
-                else:
-                    res.append('o')
-            print(''.join(res))
-        print()
+def draw(board):
+    for i in range(M):
+        res = []
+        for j in range(M):
+            b = board[i][j]
+            if b == None:
+                res.append('.')
+            elif b == 1:
+                res.append('#')
+            else:
+                res.append('o')
+        print(''.join(res))
+    print()
 
-    def show(self):
-        for i in range(M):
-            for j in range(M):
-                kwadrat(j, i, 'green')
 
-        for i in range(M):
-            for j in range(M):
-                if self.board[i][j] == 1:
-                    kolko(j, M - 1 - i, 'black')
-                if self.board[i][j] == 0:
-                    kolko(j, M - 1 - i, 'white')
+def show(board):
+    for i in range(M):
+        for j in range(M):
+            kwadrat(j, i, 'green')
 
-    def moves(self, player: int) -> List[Tuple[int, int]]:
-        return [(x, y) for x in range(M) for y in range(M)
-                if self.board[x][y] == None  # for (x, y) in self.fields
-                and any(self.can_beat(x, y, dir, player) for dir in Board.dirs)]
+    for i in range(M):
+        for j in range(M):
+            if board[i][j] == 1:
+                kolko(j, M - 1 - i, 'black')
+            if board[i][j] == 0:
+                kolko(j, M - 1 - i, 'white')
 
-    def can_beat(self, x: int, y: int, direction: Tuple[int, int], player: int) -> bool:
-        dx, dy = direction
+
+def moves(board, player: int) -> List[Tuple[int, int]]:
+    return [(x, y) for x in range(M) for y in range(M)
+            if board[x][y] == None
+            and any(can_beat(board, x, y, dir, player) for dir in dirs)]
+
+
+def can_beat(board, x, y, direction, player):
+    dx, dy = direction
+    x += dx
+    y += dy
+    cnt = 0
+    while get(board, x, y) == 1 - player:
         x += dx
         y += dy
-        cnt = 0
-        while self.get(x, y) == 1 - player:
+        cnt += 1
+    return cnt > 0 and get(board, x, y) == player
+
+
+def get(board, x, y):
+    if 0 <= x < M and 0 <= y < M:
+        return board[x][y]
+    return None
+
+
+def do_move(board, move, player):
+    x, y = move
+    x0, y0 = move
+    board[x][y] = player
+    for dx, dy in dirs:
+        x, y = x0, y0
+        to_beat = []
+        x += dx
+        y += dy
+        while get(board, x, y) == 1 - player:
+            to_beat.append((x, y))
             x += dx
             y += dy
-            cnt += 1
-        return cnt > 0 and self.get(x, y) == player
+        if get(board, x, y) == player:
+            for (nx, ny) in to_beat:
+                board[nx][ny] = player
 
-    def get(self, x: int, y: int) -> Optional[int]:
-        if 0 <= x < M and 0 <= y < M:
-            return self.board[x][y]
-        return None
 
-    def do_move(self, move: Optional[Tuple[int, int]], player: int) -> None:
-        # self.history.append([row[:] for row in self.board])
-        # self.move_list.append(move)
+def result(board):
+    res = 0
+    for x in range(M):
+        for y in range(M):
+            b = board[x][y]
+            if b == 0:
+                res += 1
+            elif b == 1:
+                res -= 1
+    return res
 
-        # if move is None:
-        #     return
-        x, y = move
-        x0, y0 = move
-        self.board[x][y] = player
-        # self.fields.remove(move)  # -= set([move])
-        for dx, dy in self.dirs:
-            x, y = x0, y0
-            to_beat = []
-            x += dx
-            y += dy
-            while self.get(x, y) == 1 - player:
-                to_beat.append((x, y))
-                x += dx
-                y += dy
-            if self.get(x, y) == player:
-                for (nx, ny) in to_beat:
-                    self.board[nx][ny] = player
 
-    # def undo_last_move(self) -> None:
-    #     assert len(self.history) and len(self.move_list)
-    #     self.board = self.history.pop()
-    #     self.fields.add(self.move_list.pop())
-
-    def result(self) -> int:
-        res = 0
-        for x in range(M):
-            for y in range(M):
-                b = self.board[x][y]
-                if b == 0:
-                    res += 1
-                elif b == 1:
-                    res -= 1
-        return res
-
-    # def terminal(self) -> bool:
-    #     if not self.fields:
-    #         return True
-    #     if len(self.move_list) < 2:
-    #         return False
-    #     return self.move_list[-1] == self.move_list[-2] == None
-
-    # def random_move(self, player: int) -> Optional[Tuple[int, int]]:
-    #     ms = self.moves(player)
-    #     return random.choice(ms) if ms else None
-
-    def h(self, player: int) -> float:
-        return sum(self.weights[i][j] * (1 if player == piece else -1)
-                   for i, row in enumerate(self.board)
-                   for j, piece in enumerate(row))
+def h(board, player):
+    return sum(weights[i][j] * (1 if player == piece else -1)
+               for i, row in enumerate(board)
+               for j, piece in enumerate(row))
 
 
 State = namedtuple('State', ['board', 'moves', 'h', 'next', 'prev', 'player'])
@@ -192,110 +170,77 @@ State = namedtuple('State', ['board', 'moves', 'h', 'next', 'prev', 'player'])
 #     player: int
 
 
-class Agent:
-    """
-    - lazy game tree
-    - calculate h for each
-    - calculate moves for each
-    """
+def init():
+    return State(board=initial_board(), moves=moves(board, 0),
+                 h=h(board, 0), next=[], prev=None, player=0)
 
-    def __init__(self) -> None:
-        b = self.b = Board()
-        self.state = State(board=b.board, moves=b.moves(0),  # type: ignore
-                           h=b.h(0), next=[], prev=None, player=0)  # type: ignore
 
-    def terminal(self, state: State) -> bool:
-        return len(state.moves) + len(state.next) == 0
-        # if not self.fields:
-        #     return True
-        # if len(self.move_list) < 2:
-        #     return False
-        # return self.move_list[-1] == self.move_list[-2] == None
+def terminal(state):
+    return len(state.moves) + len(state.next) == 0
 
-    def _calc_next(self, state: State) -> None:
-        b = self.b
-        for move in state.moves:
-            b.board = [row[:] for row in state.board]
-            b.do_move(move, state.player)
-            next_player = 1 - state.player
-            state.next.append(State(board=b.board, moves=b.moves(next_player),  # type: ignore
-                                    h=b.h(next_player), next=[], prev=state, player=next_player))  # type: ignore
 
-    max_depth = 3
-    cuts = 0
+def _calc_next(state: State):
+    for move in state.moves:
+        board = [row[:] for row in state.board]
+        do_move(board, move, state.player)
+        next_player = 1 - state.player
+        state.next.append(State(board=board, moves=moves(board, next_player),
+                                h=h(board, next_player), next=[], prev=state, player=next_player))
 
-    def max_value(self, state: State, alpha: float, beta: float, depth: int) -> float:
-        b = self.b
-        b.board = state.board
+max_depth = 3
 
-        if self.terminal(state):
-            return b.result()
-        if depth >= self.max_depth:
-            return state.h
+def max_value(state: State, alpha: float, beta: float, depth: int) -> float:
+    if terminal(state):
+        return result(state.board)
+    if depth >= max_depth:
+        return state.h
 
-        value = -inf
-        if not state.next:
-            self._calc_next(state)
-        for s in state.next:
-            value = max(value, self.min_value(s, alpha, beta, depth + 1))
-            if value >= beta:
-                self.cuts += 1
-                return value
-            alpha = max(alpha, value)
-        return value
+    value = -inf
+    if not state.next:
+        _calc_next(state)
+    for s in state.next:
+        value = max(value, min_value(s, alpha, beta, depth + 1))
+        if value >= beta:
+            return value
+        alpha = max(alpha, value)
+    return value
 
-    def min_value(self, state: State, alpha: float, beta: float, depth: int) -> float:
-        b = self.b
-        b.board = state.board
+def min_value(state: State, alpha: float, beta: float, depth: int) -> float:
+    if terminal(state):
+        return result(state.board)
+    if depth >= max_depth:
+        return state.h
 
-        if self.terminal(state):
-            return b.result()
-        if depth >= self.max_depth:
-            return state.h
+    value = inf
+    if not state.next:
+        _calc_next(state)
+    for s in state.next:
+        value = min(value, max_value(s, alpha, beta, depth + 1))
+        if value <= alpha:
+            return value
+        beta = min(beta, value)
+    return value
 
-        value = inf
-        if not state.next:
-            self._calc_next(state)
-        for s in state.next:
-            value = min(value, self.max_value(s, alpha, beta, depth + 1))
-            if value <= alpha:
-                self.cuts += 1
-                return value
-            beta = min(beta, value)
-        return value
+def random_move(state):
+    if not state.next:
+        _calc_next(state)
+    return random.choice(state.next)
 
-    def random_move(self):
-        if not self.state.next:
-            self._calc_next(self.state)
-        self.state = random.choice(self.state.next)
+def agent_move(self):
+    if not state.next:
+        _calc_next(state)
+    return max(state.next, key=lambda s: min_value(s, -inf, inf, 0))
 
-    def agent_move(self):
-        if not self.state.next:
-            self._calc_next(self.state)
-        self.state = max(
-            self.state.next, key=lambda s: self.min_value(s, -inf, inf, 0))
-
-    #     def key(move):
-    #         self.do_move(move, player)
-    #         v = self.min_value(1 - player, -inf, inf, 0)
-    #         self.undo_last_move()
-    #         return v
-    #     moves = self.moves(player)
-    # return max(moves, key=key) if moves else None
 
 def agent_vs_random() -> int:
-    B = Agent()
-
-    while not B.terminal(B.state):
-        if B.state.player:
-            B.random_move()
+    state = init()
+    while not terminal(state):
+        if state.player:
+            state = random_move(state)
         else:
-            # B.random_move()
-            B.agent_move()
+            state = agent_move(state)
 
-    # print(B.cuts)
-    B.b.board = B.state.board
-    return B.b.result()
+    return result(state.board)
 
 
 # def turtle_random():
