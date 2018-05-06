@@ -171,7 +171,8 @@ State = namedtuple('State', ['board', 'moves', 'h', 'next', 'prev', 'player'])
 
 
 def init():
-    return State(board=initial_board(), moves=moves(board, 0),
+    board = initial_board()
+    return State(board=board, moves=moves(board, 0),
                  h=h(board, 0), next=[], prev=None, player=0)
 
 
@@ -187,7 +188,7 @@ def _calc_next(state: State):
         state.next.append(State(board=board, moves=moves(board, next_player),
                                 h=h(board, next_player), next=[], prev=state, player=next_player))
 
-max_depth = 3
+max_depth = 2
 
 def max_value(state: State, alpha: float, beta: float, depth: int) -> float:
     if terminal(state):
@@ -226,7 +227,7 @@ def random_move(state):
         _calc_next(state)
     return random.choice(state.next)
 
-def agent_move(self):
+def agent_move(state):
     if not state.next:
         _calc_next(state)
     return max(state.next, key=lambda s: min_value(s, -inf, inf, 0))
