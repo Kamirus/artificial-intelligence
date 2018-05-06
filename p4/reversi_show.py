@@ -188,6 +188,7 @@ class Board:
                    for j, piece in enumerate(row))
 
     max_depth = 3
+    cuts = 0
 
     def max_value(self, player: int, alpha: float, beta: float, depth: int) -> float:
         if self.terminal():
@@ -202,6 +203,7 @@ class Board:
                         self.min_value(1 - player, alpha, beta, depth + 1))
             self.undo_last_move()
             if value >= beta:
+                self.cuts += 1
                 return value
             alpha = max(alpha, value)
         return value
@@ -219,6 +221,7 @@ class Board:
                         self.max_value(1 - player, alpha, beta, depth + 1))
             self.undo_last_move()
             if value <= alpha:
+                self.cuts += 1
                 return value
             beta = min(beta, value)
         return value
@@ -229,17 +232,15 @@ def agent_vs_random() -> int:
     B = Board()
 
     while not B.terminal():
-        # B.draw()
         if player:
-            # print(f'random {player}')
             m = B.random_move(player)
         else:
-            # print(f'agent {player}')
+            # m = B.random_move(player)
             m = B.agent_move(player)
         B.do_move(m, player)
         player = 1-player
 
-    # B.draw()
+    # print(B.cuts)
     return B.result()
 
 
@@ -266,7 +267,7 @@ def turtle_random():
 
 
 def main():
-    x = sum(agent_vs_random() > 0 for _ in range(100))
+    x = sum(agent_vs_random() > 0 for _ in range(6))
     print(x)
 
 
