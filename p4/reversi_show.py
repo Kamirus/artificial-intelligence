@@ -99,7 +99,7 @@ def show(board):
                 kolko(j, M - 1 - i, 'white')
 
 
-State = namedtuple('State', ['board', 'fields', 'h', 'next', 'prev', 'player'])
+State = namedtuple('State', ['board', 'fields', 'h', 'next', 'player'])
 
 
 # def moves(state: State) -> List[Tuple[int, int, int]]:
@@ -126,6 +126,10 @@ def get(board, x, y):
     if 0 <= x < M and 0 <= y < M:
         return board[x][y]
     return None
+
+
+def sorted_next_states(state: State) -> List[State]:
+    return sorted(next_states(state), key=lambda s: s.h, reverse=1-state.player)
 
 
 def next_states(state: State) -> Iterable[State]:
@@ -158,7 +162,7 @@ def next_states(state: State) -> Iterable[State]:
             next_board[x0][y0] = state.player
             next_fields.update(to_fields)
             new_state = State(next_board, next_fields, next_h +
-                              h_mul * weights[x0][y0], [], state, 1 - state.player)
+                              h_mul * weights[x0][y0], [], 1 - state.player)
             state.next.append(new_state)
             # draw(next_board)
             yield new_state
@@ -166,7 +170,7 @@ def next_states(state: State) -> Iterable[State]:
             # clean for next move
             next_board = [row[:] for row in state.board]
             next_fields = set(state.fields)
-            next_h = -state.h
+            next_h = state.h
 
 
 def result(board):
@@ -202,12 +206,17 @@ def init() -> State:
               (3, 2), (3, 5),
               (4, 2), (4, 5),
               (5, 3), (5, 4), }
-    return State(board, fields, 0, [], None, 0)
+    return State(board, fields, 0, [], 0)
+
+
+def update_next_states(state: State) -> None:
+    if not state.next:
+        # state.next.extend(next_states(state))
+        state.next.extend(sorted_next_states(state))
 
 
 def terminal(state):
-    if not state.next:
-        state.next.extend(next_states(state))
+    update_next_states(state)
     return not state.next
 
 
@@ -220,57 +229,59 @@ def terminal(state):
 #                                 h=h(board, next_player), next=[], prev=state, player=next_player))
 
 
-max_depth = 0
+max_depth = 6
 
 
-def max_value(state: State, alpha: float, beta: float, depth: int) -> float:
+def max_value(state: State, alpha: float, beta: float, depth: int) -> Tuple[float, Optional[State]]:
+    vstate = None
     if depth >= max_depth:
-        return state.h
+        return state.h, vstate
+
+    update_next_states(state)
 
     if not state.next:
-        state.next.extend(next_states(state))
-    
-    if not state.next:
-        return result(state.board)
+        return result(state.board), vstate
 
     value = -inf
     for s in state.next:
-        value = max(value, min_value(s, alpha, beta, depth + 1))
+        v, _ = min_value(s, alpha, beta, depth + 1)
+        if v > value:
+            value, vstate = v, s  # value = max(value, )
         if value >= beta:
-            return value
+            return value, vstate
         alpha = max(alpha, value)
-    return value
+    return value, vstate
 
 
-def min_value(state: State, alpha: float, beta: float, depth: int) -> float:
+def min_value(state: State, alpha: float, beta: float, depth: int) -> Tuple[float, Optional[State]]:
+    vstate = None
     if depth >= max_depth:
-        return state.h
+        return state.h, vstate
+
+    update_next_states(state)
 
     if not state.next:
-        state.next.extend(next_states(state))
-
-    if not state.next:
-        return result(state.board)
+        return result(state.board), vstate
 
     value = inf
     for s in state.next:
-        value = min(value, max_value(s, alpha, beta, depth + 1))
+        v, _ = max_value(s, alpha, beta, depth + 1)
+        if v < value:
+            value, vstate = v, s  # value = min(value, )
         if value <= alpha:
-            return value
+            return value, vstate
         beta = min(beta, value)
-    return value
+    return value, vstate
 
 
 def random_move(state):
-    # if not state.next:
-    #     _calc_next(state)
     return random.choice(state.next)
 
 
 def agent_move(state):
-    # if not state.next:
-    #     _calc_next(state)
-    return max(state.next, key=lambda s: min_value(s, -inf, inf, 0))
+    _, next_state = max_value(state, -inf, inf, 0)
+    return next_state
+    # return max(state.next, key=lambda s: min_value(s, -inf, inf, 0))
 
 
 def agent_vs_random() -> int:
@@ -309,9 +320,9 @@ def agent_vs_random() -> int:
 
 
 def main():
-    N = 1000
+    N = 1
     x = sum(agent_vs_random() > 0 for _ in range(N))
-    print(f'{100 * x // N}%')
+    print(f'{100 * x // N}%   {x}')
 
 
 if __name__ == '__main__':
