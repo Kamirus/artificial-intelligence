@@ -3,7 +3,7 @@ import sys
 from math import inf
 from collections import defaultdict as dd
 from turtle import *
-from typing import List, Tuple, Optional, NamedTuple
+from typing import List, Tuple, Optional, NamedTuple, Iterable
 from collections import namedtuple
 
 #####################################################
@@ -54,12 +54,12 @@ def initial_board():
 dirs = [(0, 1), (1, 0), (-1, 0), (0, -1),
         (1, 1), (-1, -1), (1, -1), (-1, 1)]
 
-p0 = 8.0
-p1 = 5.0
-p2 = 2.0
-p3 = 1.0
-p4 = 0.5
-p5 = 0.2
+p0 = 100  # 8
+p1 = 70  # 5
+p2 = 20  # 2
+p3 = 40  # 1
+p4 = 5  # 0.5
+p5 = -5  # 0.2
 
 weights = ((p0, p2, p1, p1, p1, p1, p2, p0),
            (p2, p2, p4, p4, p4, p4, p2, p2),
@@ -99,22 +99,27 @@ def show(board):
                 kolko(j, M - 1 - i, 'white')
 
 
-def moves(board, player: int) -> List[Tuple[int, int]]:
-    return [(x, y) for x in range(M) for y in range(M)
-            if board[x][y] == None
-            and any(can_beat(board, x, y, dir, player) for dir in dirs)]
+State = namedtuple('State', ['board', 'fields', 'h', 'next', 'prev', 'player'])
 
 
-def can_beat(board, x, y, direction, player):
-    dx, dy = direction
-    x += dx
-    y += dy
-    cnt = 0
-    while get(board, x, y) == 1 - player:
-        x += dx
-        y += dy
-        cnt += 1
-    return cnt > 0 and get(board, x, y) == player
+# def moves(state: State) -> List[Tuple[int, int, int]]:
+#     return sorted((beats(state.board, x, y, state.player), x, y) for (x, y) in state.fields)
+
+
+# def beats(board, x0, y0, player) -> int:
+#     res = 0
+#     for dir in dirs:
+#         dx, dy = dir
+#         x = x0 + dx
+#         y = y0 + dy
+#         cnt = 0
+#         while get(board, x, y) == 1 - player:
+#             x += dx
+#             y += dy
+#             cnt += 1
+#         if get(board, x, y) == player:
+#             res += cnt
+#     return res
 
 
 def get(board, x, y):
@@ -123,22 +128,45 @@ def get(board, x, y):
     return None
 
 
-def do_move(board, move, player):
-    x, y = move
-    x0, y0 = move
-    board[x][y] = player
-    for dx, dy in dirs:
-        x, y = x0, y0
-        to_beat = []
-        x += dx
-        y += dy
-        while get(board, x, y) == 1 - player:
-            to_beat.append((x, y))
-            x += dx
-            y += dy
-        if get(board, x, y) == player:
-            for (nx, ny) in to_beat:
-                board[nx][ny] = player
+def next_states(state: State) -> Iterable[State]:
+    next_board = [row[:] for row in state.board]
+    next_fields = set(state.fields)
+    next_h = state.h
+    h_mul = 1 if state.player == 0 else -1
+    for move in state.fields:
+        x0, y0 = move
+        to_fields = []
+        for dx, dy in dirs:
+            to_beat = []
+            x, y = x0 + dx, y0 + dy
+            if x < 0 or x >= M or y < 0 or y >= M:
+                continue
+            if next_board[x][y] is None:
+                to_fields.append((x, y))
+                continue
+            while get(next_board, x, y) == 1 - state.player:
+                to_beat.append((x, y))
+                x += dx
+                y += dy
+            if to_beat and get(next_board, x, y) == state.player:
+                for (nx, ny) in to_beat:
+                    next_h += h_mul * 2 * weights[nx][ny]  # update h
+                    next_board[nx][ny] = state.player
+                next_fields.discard(move)  # valid move
+        if move not in next_fields:
+            # valid move
+            next_board[x0][y0] = state.player
+            next_fields.update(to_fields)
+            new_state = State(next_board, next_fields, next_h +
+                              h_mul * weights[x0][y0], [], state, 1 - state.player)
+            state.next.append(new_state)
+            # draw(next_board)
+            yield new_state
+
+            # clean for next move
+            next_board = [row[:] for row in state.board]
+            next_fields = set(state.fields)
+            next_h = -state.h
 
 
 def result(board):
@@ -153,13 +181,11 @@ def result(board):
     return res
 
 
-def h(board, player):
-    return sum(weights[i][j] * (1 if player == piece else -1)
-               for i, row in enumerate(board)
-               for j, piece in enumerate(row))
+# def h(board, player):
+#     return sum(weights[i][j] * (1 if player == piece else -1)
+#                for i, row in enumerate(board)
+#                for j, piece in enumerate(row))
 
-
-State = namedtuple('State', ['board', 'moves', 'h', 'next', 'prev', 'player'])
 
 # class State(NamedTuple):
 #     board: List[List[int]]
@@ -170,35 +196,44 @@ State = namedtuple('State', ['board', 'moves', 'h', 'next', 'prev', 'player'])
 #     player: int
 
 
-def init():
+def init() -> State:
     board = initial_board()
-    return State(board=board, moves=moves(board, 0),
-                 h=h(board, 0), next=[], prev=None, player=0)
+    fields = {(2, 3), (2, 4),
+              (3, 2), (3, 5),
+              (4, 2), (4, 5),
+              (5, 3), (5, 4), }
+    return State(board, fields, 0, [], None, 0)
 
 
 def terminal(state):
-    return len(state.moves) + len(state.next) == 0
+    if not state.next:
+        state.next.extend(next_states(state))
+    return not state.next
 
 
-def _calc_next(state: State):
-    for move in state.moves:
-        board = [row[:] for row in state.board]
-        do_move(board, move, state.player)
-        next_player = 1 - state.player
-        state.next.append(State(board=board, moves=moves(board, next_player),
-                                h=h(board, next_player), next=[], prev=state, player=next_player))
+# def _calc_next(state: State):
+#     for move in state.moves:
+#         board = [row[:] for row in state.board]
+#         do_move(board, move, state.player)
+#         next_player = 1 - state.player
+#         state.next.append(State(board=board, moves=moves(board, next_player),
+#                                 h=h(board, next_player), next=[], prev=state, player=next_player))
 
-max_depth = 2
+
+max_depth = 0
+
 
 def max_value(state: State, alpha: float, beta: float, depth: int) -> float:
-    if terminal(state):
-        return result(state.board)
     if depth >= max_depth:
         return state.h
 
-    value = -inf
     if not state.next:
-        _calc_next(state)
+        state.next.extend(next_states(state))
+    
+    if not state.next:
+        return result(state.board)
+
+    value = -inf
     for s in state.next:
         value = max(value, min_value(s, alpha, beta, depth + 1))
         if value >= beta:
@@ -206,15 +241,18 @@ def max_value(state: State, alpha: float, beta: float, depth: int) -> float:
         alpha = max(alpha, value)
     return value
 
+
 def min_value(state: State, alpha: float, beta: float, depth: int) -> float:
-    if terminal(state):
-        return result(state.board)
     if depth >= max_depth:
         return state.h
 
-    value = inf
     if not state.next:
-        _calc_next(state)
+        state.next.extend(next_states(state))
+
+    if not state.next:
+        return result(state.board)
+
+    value = inf
     for s in state.next:
         value = min(value, max_value(s, alpha, beta, depth + 1))
         if value <= alpha:
@@ -222,25 +260,29 @@ def min_value(state: State, alpha: float, beta: float, depth: int) -> float:
         beta = min(beta, value)
     return value
 
+
 def random_move(state):
-    if not state.next:
-        _calc_next(state)
+    # if not state.next:
+    #     _calc_next(state)
     return random.choice(state.next)
 
+
 def agent_move(state):
-    if not state.next:
-        _calc_next(state)
+    # if not state.next:
+    #     _calc_next(state)
     return max(state.next, key=lambda s: min_value(s, -inf, inf, 0))
 
 
 def agent_vs_random() -> int:
     state = init()
     while not terminal(state):
+        # draw(state.board)
         if state.player:
             state = random_move(state)
         else:
+            # state = random_move(state)
             state = agent_move(state)
-
+    # draw(state.board)
     return result(state.board)
 
 
@@ -267,8 +309,9 @@ def agent_vs_random() -> int:
 
 
 def main():
-    x = sum(agent_vs_random() > 0 for _ in range(1))
-    print(x)
+    N = 1000
+    x = sum(agent_vs_random() > 0 for _ in range(N))
+    print(f'{100 * x // N}%')
 
 
 if __name__ == '__main__':
