@@ -6,6 +6,9 @@ from turtle import *
 from typing import List, Tuple, Optional, NamedTuple, Iterable
 from collections import namedtuple
 
+# random.seed(42)
+# random.seed(5127)
+
 #####################################################
 # turtle graphic
 #####################################################
@@ -54,11 +57,11 @@ def initial_board():
 dirs = [(0, 1), (1, 0), (-1, 0), (0, -1),
         (1, 1), (-1, -1), (1, -1), (-1, 1)]
 
-p0 = 100  # 8
-p1 = 70  # 5
+p0 = 150  # 8
+p1 = 50  # 5
 p2 = 20  # 2
-p3 = 40  # 1
-p4 = 5  # 0.5
+p3 = 50  # 1
+p4 = 15  # 0.5
 p5 = -5  # 0.2
 
 weights = ((p0, p2, p1, p1, p1, p1, p2, p0),
@@ -129,7 +132,9 @@ def get(board, x, y):
 
 
 def sorted_next_states(state: State) -> List[State]:
-    return sorted(next_states(state), key=lambda s: s.h, reverse=1-state.player)
+    return next_states(state)
+    # return sorted(next_states(state), key=lambda s: s.h, reverse=state.player)
+    # return sorted(next_states(state), key=lambda s: s.h, reverse=1-state.player)
 
 
 def next_states(state: State) -> Iterable[State]:
@@ -229,7 +234,7 @@ def terminal(state):
 #                                 h=h(board, next_player), next=[], prev=state, player=next_player))
 
 
-max_depth = 6
+max_depth = 2
 
 
 def max_value(state: State, alpha: float, beta: float, depth: int) -> Tuple[float, Optional[State]]:
@@ -320,7 +325,7 @@ def agent_vs_random() -> int:
 
 
 def main():
-    N = 1
+    N = 1000
     x = sum(agent_vs_random() > 0 for _ in range(N))
     print(f'{100 * x // N}%   {x}')
 
