@@ -247,7 +247,7 @@ def agent_vs_random() -> int:
     return result(state.board)
 
 
-# random.seed(42)
+random.seed(42)
 
 max_depth = 2
 
@@ -256,12 +256,19 @@ def sorted_next_states(state: State) -> Iterable[State]:
     # return next_states(state)
     return sorted(next_states(state), key=lambda s: s.h, reverse=state.player)
     # return sorted(next_states(state), key=lambda s: s.h, reverse=1-state.player)
+    # return sorted(next_states(state), key=lambda s: s.h, reverse=True)
+    # return sorted(next_states(state), key=lambda s: s.h)
 
 
 def main():
+    """
+    depth2 935/1000 65loses 47s
+    depth3 938/1000 62loses 2m25s
+    depth4 98 /100   2loses 2m25s
+    """
     N = 1000
     x = sum(agent_vs_random() > 0 for _ in range(N))
-    print(f'{100 * x // N}%   {x}/{N}')
+    print(f'{100 * x // N}%   {x}/{N}   {N - x} loses')
 
 
 def pruning():
@@ -273,16 +280,18 @@ def pruning():
 
     seed 42
     5depth; 10N
-        no sort       -> 1m40s; 1m44s
-        player sort   -> 1m6s ; 1m8s
+        no       sort -> 1m40s; 1m44s
+          player sort -> 1m6s ; 1m8s
         1-player sort -> 1m16s; 1m15s
+        desc     sort -> 1m9s
+        asc      sort -> 1m14s
     """
     global max_depth
     max_depth = 5
     N = 10
     print(f'pruning; {N} times; depth={max_depth}')
     x = sum(agent_vs_random() > 0 for _ in range(N))
-    print(f'{100 * x // N}%   {x}/{N}')
+    print(f'{100 * x // N}%   {x}/{N}   {N - x} loses')
 
 
 if __name__ == '__main__':
