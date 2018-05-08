@@ -6,8 +6,6 @@ from turtle import *
 from typing import List, Tuple, Optional, NamedTuple, Iterable
 from collections import namedtuple
 
-# random.seed(42)
-# random.seed(5127)
 
 #####################################################
 # turtle graphic
@@ -105,36 +103,10 @@ def show(board):
 State = namedtuple('State', ['board', 'fields', 'h', 'next', 'player'])
 
 
-# def moves(state: State) -> List[Tuple[int, int, int]]:
-#     return sorted((beats(state.board, x, y, state.player), x, y) for (x, y) in state.fields)
-
-
-# def beats(board, x0, y0, player) -> int:
-#     res = 0
-#     for dir in dirs:
-#         dx, dy = dir
-#         x = x0 + dx
-#         y = y0 + dy
-#         cnt = 0
-#         while get(board, x, y) == 1 - player:
-#             x += dx
-#             y += dy
-#             cnt += 1
-#         if get(board, x, y) == player:
-#             res += cnt
-#     return res
-
-
 def get(board, x, y):
     if 0 <= x < M and 0 <= y < M:
         return board[x][y]
     return None
-
-
-def sorted_next_states(state: State) -> List[State]:
-    return next_states(state)
-    # return sorted(next_states(state), key=lambda s: s.h, reverse=state.player)
-    # return sorted(next_states(state), key=lambda s: s.h, reverse=1-state.player)
 
 
 def next_states(state: State) -> Iterable[State]:
@@ -190,21 +162,6 @@ def result(board):
     return res
 
 
-# def h(board, player):
-#     return sum(weights[i][j] * (1 if player == piece else -1)
-#                for i, row in enumerate(board)
-#                for j, piece in enumerate(row))
-
-
-# class State(NamedTuple):
-#     board: List[List[int]]
-#     moves: List[Tuple[int, int]]
-#     h: float
-#     next: List[State]
-#     prev: State
-#     player: int
-
-
 def init() -> State:
     board = initial_board()
     fields = {(2, 3), (2, 4),
@@ -223,18 +180,6 @@ def update_next_states(state: State) -> None:
 def terminal(state):
     update_next_states(state)
     return not state.next
-
-
-# def _calc_next(state: State):
-#     for move in state.moves:
-#         board = [row[:] for row in state.board]
-#         do_move(board, move, state.player)
-#         next_player = 1 - state.player
-#         state.next.append(State(board=board, moves=moves(board, next_player),
-#                                 h=h(board, next_player), next=[], prev=state, player=next_player))
-
-
-max_depth = 2
 
 
 def max_value(state: State, alpha: float, beta: float, depth: int) -> Tuple[float, Optional[State]]:
@@ -279,11 +224,11 @@ def min_value(state: State, alpha: float, beta: float, depth: int) -> Tuple[floa
     return value, vstate
 
 
-def random_move(state):
+def random_move(state: State) -> State:
     return random.choice(state.next)
 
 
-def agent_move(state):
+def agent_move(state: State):
     _, next_state = max_value(state, -inf, inf, 0)
     return next_state
     # return max(state.next, key=lambda s: min_value(s, -inf, inf, 0))
@@ -302,33 +247,44 @@ def agent_vs_random() -> int:
     return result(state.board)
 
 
-# def turtle_random():
-#     player = 0
-#     B = Board()
+# random.seed(42)
 
-#     while True:
-#         B.draw()
-#         B.show()
-#         m = B.random_move(player) if player else B.agent_move(player)
-#         B.do_move(m, player)
-#         player = 1-player
-#         input()  # raw_input()
-#         if B.terminal():
-#             break
+max_depth = 2
 
-#     B.draw()
-#     B.show()
-#     print('Result', B.result())
-#     input('Game over!')  # raw_input('Game over!')
 
-#     sys.exit(0)
+def sorted_next_states(state: State) -> Iterable[State]:
+    # return next_states(state)
+    return sorted(next_states(state), key=lambda s: s.h, reverse=state.player)
+    # return sorted(next_states(state), key=lambda s: s.h, reverse=1-state.player)
 
 
 def main():
     N = 1000
     x = sum(agent_vs_random() > 0 for _ in range(N))
-    print(f'{100 * x // N}%   {x}')
+    print(f'{100 * x // N}%   {x}/{N}')
+
+
+def pruning():
+    """
+    5depth; 100N
+        no sort       -> 14m1s
+        player sort   -> 11m52s
+        1-player sort -> 12m10s
+
+    seed 42
+    5depth; 10N
+        no sort       -> 1m40s; 1m44s
+        player sort   -> 1m6s ; 1m8s
+        1-player sort -> 1m16s; 1m15s
+    """
+    global max_depth
+    max_depth = 5
+    N = 10
+    print(f'pruning; {N} times; depth={max_depth}')
+    x = sum(agent_vs_random() > 0 for _ in range(N))
+    print(f'{100 * x // N}%   {x}/{N}')
 
 
 if __name__ == '__main__':
     main()
+    # pruning()
